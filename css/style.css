@@ -1,0 +1,355 @@
+@font-face {
+    font-family: regular;
+    src: url(../font/OpenSans-Regular.ttf);
+  }
+  @font-face {
+    font-family: bold;
+    src: url(../font/OpenSans-Bold.ttf);
+  }
+body{
+    padding: 10px;
+    height: auto;
+    width: 500px;
+      font-size: 14px;
+      font-family: regular;
+  }
+#mainPopup {
+ 
+}
+.form-group-d{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 15px 0;
+}
+.button {
+    border: 1px solid transparent;
+    border-radius: 2px;
+    display: inline-block;
+    width: auto;
+    height: 30px;
+    background: #b41e4d;
+    color: white;
+    font-family: bold;
+    text-transform: uppercase;
+    line-height: 30px;
+    padding: 0 30px;
+    margin: auto;
+    position: relative;
+    left: 50%;
+    cursor: pointer;
+    transform: translateX(-50%);
+    outline: none !important;
+}
+.form-group-d span{
+    width: 35%;
+   font-family: bold;
+    color: white;
+}
+.form-group-d input, .form-group-d select{
+    box-sizing: border-box;
+    border: 1px solid #ebebeb;
+    padding: 7px 20px;
+    border-radius: 5px;
+    -moz-border-radius: 5px;
+    -webkit-border-radius: 5px;
+    -o-border-radius: 5px;
+    -ms-border-radius: 5px;
+    font-size: 14px;
+    display: block;
+    width: 100%;
+    outline: none;
+    color: #B3000C;
+    }
+    
+h1 {
+    font-size: 2em;
+}
+.loading{
+    background-image: url(../images/loading.svg);
+    background-size: 25px;
+    background-position: center;
+    background-repeat: no-repeat;
+    background-color: white;
+    border-color: #B3000C;
+    color: white;
+}
+#login-form{
+    padding: 15px;
+}
+input{
+    outline: none !important;
+    box-shadow: none !important;
+}
+.ng-empty{
+    background-image: url(../images/attention.svg);
+    background-size: 15px;
+    background-position: 97% 50%;
+    background-repeat: no-repeat;
+    background-color: white;
+}
+.sender.ng-empty{
+    background-image: unset;
+}
+
+.back {
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    padding: 0;
+    margin: 0;
+    background-color: #00aaaa;
+    opacity: 0.5;
+    z-index: -1;
+    background-image: url(../images/caythong.png);
+    background-size: contain;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .normal-day{
+    position: fixed;
+    width: 100%;
+    height: 100%;
+    top: 0;
+    left: 0;
+    padding: 0;
+    margin: 0;
+    z-index: -1;
+    background-image: url(../images/af7c9520cda0b44230fe147ea7de728e.jpg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+  }
+  .snow {
+    position: absolute;
+    background-color: #fff;
+    top: 0;
+    border-radius: 50%;
+    animation-name: snowing;
+    animation-iteration-count: infinite;
+    animation-timing-function: linear;
+    opacity: 1;
+  }
+  .err-out {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    font-size: 20px;
+    color: #B3000C;
+    background: rgba(255, 255, 255, 0.79);
+}
+  .snow-flake1 {
+    width: 12px;
+    height: 12px;
+    left: 5%;
+    animation-duration: 1.5s;
+  }
+  .log-out {
+    position: fixed;
+    bottom: 15px;
+    right: 15px;
+    height: 15px;
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 11px;
+    color: #b41e4d;
+}
+  .snow-flake2 {
+    width: 6px;
+    height: 6px;
+    left: 15%;
+    animation-duration: 2.75s;
+  }
+  .snow-flake3 {
+    width: 8px;
+    height: 8px;
+    left: 25%;
+    animation-duration: 4.5s;
+  }
+  .snow-flake4 {
+    width: 12px;
+    height: 12px;
+    left: 30%;
+    animation-duration: 5s;
+  }
+  .snow-flake5 {
+    width: 11px;
+    height: 11px;
+    left: 35%;
+    animation-duration: 2.2s;
+  }
+  .snow-flake6 {
+    width: 8px;
+    height: 8px;
+    left: 45%;
+    animation-duration: 1.85s;
+  }
+  
+  .snow-flake7 {
+    width: 5px;
+    height: 5px;
+    left: 55%;
+    animation-duration: 3.5s;
+  }
+  .snow-flake8 {
+    width: 7px;
+    height: 7px;
+    left: 60%;
+    animation-duration: 3.75s;
+  }
+  .snow-flake9 {
+    width: 9px;
+    height: 9px;
+    left: 65%;
+    animation-duration: 4.5s;
+  }
+  .snow-flake10 {
+    width: 11px;
+    height: 11px;
+    left: 75%;
+    animation-duration: 1.75s;
+  }
+  
+  .snow-flake11 {
+    width: 12px;
+    height: 12px;
+    left: 80%;
+    animation-duration: 2.75s;
+  }
+  .snow-flake12 {
+    width: 6px;
+    height: 6px;
+    left: 85%;
+    animation-duration: 3.75s;
+  }
+  .snow-flake13 {
+    width: 8px;
+    height: 8px;
+    left: 90%;
+    animation-duration: 4.5s;
+  }
+  .snow-flake14 {
+    width: 12px;
+    height: 12px;
+    left: 95%;
+    animation-duration: 1.65s;
+  }
+  .snow-flake15 {
+    width: 11px;
+    height: 11px;
+    left: 100%;
+    animation-duration: 2.5s;
+  }
+  .snow-flake16 {
+    width: 21px;
+    height: 21px;
+    left: 62%;
+    animation-duration: 2.6s;
+  }
+  .snow-flake17 {
+    width: 14px;
+    height: 14px;
+    left: 18%;
+    animation-duration: 2.7s;
+  }
+  .snow-flake18 {
+    width: 8px;
+    height: 8px;
+    left: 44%;
+    animation-duration: 2.8s;
+  }
+  .snow-flake19 {
+    width: 19px;
+    height: 19px;
+    left: 46%;
+    animation-duration: 2.85s;
+  }
+  .snow-flake20 {
+    width: 30px;
+    height: 30px;
+    left: 68%;
+    animation-duration: 2.75s;
+  }
+  .snow-flake21 {
+    width: 10px;
+    height: 10px;
+    left: 90%;
+    animation-duration: 2.65s;
+  }
+  .snow-flake22 {
+    width: 16px;
+    height: 16px;
+    left: 73%;
+    animation-duration: 2.55s;
+  }
+  .snow-flake23 {
+    width: 13px;
+    height: 13px;
+    left: 14%;
+    animation-duration: 2.45s;
+  }
+  .snow-flake24 {
+    width: 13px;
+    height: 12px;
+    left: 35%;
+    animation-duration: 2.35s;
+  }
+  .snow-flake25 {
+    width: 16px;
+    height: 16px;
+    left: 85%;
+    animation-duration: 2.25s;
+  }
+  
+  @keyframes snowing {
+    100% {
+      top: 90%;
+      opacity: 0.4;
+    }
+  }
+  
+  .snow-piles {
+    position: absolute;
+    bottom: 0;
+    background: #eee;
+    border-radius: 100% 100% 0 0;
+    z-index: -1;
+  }
+  
+  .snow-pile1 {
+    width: 50%;
+    height: 75px;
+    left: 0;
+  }
+  .snow-pile2 {
+    width: 50%;
+    height: 100px;
+    left: 25%;
+  }
+  .snow-pile3 {
+    width: 50%;
+    height: 75px;
+    left: 50%;
+  }
+  
+  @keyframes wink{
+    50%{
+  transform: scale(1.5);
+     }
+  }
+  
+  @keyframes wave{
+     50%{
+     transform: skewY(10deg);
+     }
+     75%{
+        transform: skewY(20deg);
+     }
+  }
