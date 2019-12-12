@@ -8,7 +8,7 @@ angular.module('app', [])
       $scope.sendValue = {};
       $scope.enable_status = true;
       $scope.showtag();
-
+      $scope.user_name = '';
       $scope.showEedit();
 
       const code = `(function getUrls(){
@@ -27,6 +27,9 @@ angular.module('app', [])
           $scope.sendValue.customer = main_param.slice(id_pos + 1);
         });
       });
+      chrome.storage.sync.get(['user_name'], function (result) {
+        $scope.user_name = result.user_name;
+      })
       chrome.storage.sync.get(['keyttv'], function (result) {
         $scope.sendValue.path = result.keyttv;
         $scope.sendValue.tag = result.keyttv;
@@ -187,9 +190,10 @@ angular.module('app', [])
       } else if ($scope.login.password == null || $scope.login.password == "") {
         $.notify('Lỗi', 'error')
       } else if ($scope.login.id == '000' && $scope.login.password == "123") {
+        $scope.sendAndClearData(000);
         $.notify('Đăng nhập thành công', 'success');
         var utc = new Date().toJSON().slice(0, 10).replace(/-/g, '/');
-        chrome.storage.sync.set({ key: utc, phone: '000', user_id: 1323, inboxUserData: [],login: 999999 }, function () { });
+        chrome.storage.sync.set({ key: utc, user_name: 'DEV', phone: '000', user_id: 1323, inboxUserData: [],login: 999999 }, function () { });
         $scope.login_require = false;
         $scope.base_url = 'http://dev.seoulspa.vn';
         $scope.getListStaff();
@@ -205,15 +209,19 @@ angular.module('app', [])
           "identity": $scope.login.id,
           "password": $scope.login.password
         }
+        console.log(arrSend);
         fetch($scope.base_url + '/api/index.php/user/login', {
           method: 'post',
           body: JSON.stringify(arrSend)
         }).then(r => {
           r.json().then(function (data) {
+            console.log(data);
             if (data.status == 200) {
+              $scope.sendAndClearData(data.user.phone);
+
               $.notify('Đăng nhập thành công', 'success');
               var utc = new Date().toJSON().slice(0, 10).replace(/-/g, '/');
-              chrome.storage.sync.set({ key: utc, phone: data.user.phone, user_id: data.user.id, inboxUserData: [] }, function () { });
+              chrome.storage.sync.set({ key: utc, user_name : data.user.last_name + data.user.first_name , phone: data.user.phone, user_id: data.user.id, inboxUserData: [] }, function () { });
               $scope.$apply(function () {
                 $scope.login_require = false;
                 $scope.getListStaff();
@@ -227,12 +235,31 @@ angular.module('app', [])
       }
     }
     $scope.logout = () => {
-      chrome.storage.sync.remove(['key', 'phone', 'staffs', 'inboxUserData'], function (result) {
+      chrome.storage.sync.remove(['key', 'phone', 'staffs'], function (result) {
         $scope.$apply(function () {
           $scope.login_require = true;
           $scope.base_url = 'http://app.seoulspa.vn';
           $scope.staffs = [];
         });
       });
+    }
+    $scope.sendAndClearData = (phone) => {
+      chrome.storage.sync.get(['inboxUserData'], function (result) {
+
+          let dataArray = [];
+          result.inboxUserData.forEach(element => {
+            element.api_key = '1DB185DCFB40836B29BFC1A500E3EB';
+            element.user_id = element.user_id;
+            element.conversation_code =  element.inbox_id;
+            element.latest_update = element.time;
+          });
+          var based_url = phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
+            fetch(based_url + '/api/index.php/pancake/api_update_detail_converesation', {
+              method: 'post',
+              body: JSON.stringify(result.inboxUserData)
+            }).then(r => {
+              chrome.storage.sync.set({'inboxUserData': [] }, function () { });
+            })  
+      })
     }
   })

@@ -32,7 +32,7 @@
     </div>
     <div ng-if="login_require == false" id="mainPopup">
         <form>
-            <div class="sign-form">
+            <!-- <div class="sign-form">
                 <div class="form-group-d">
                     <span>Người gửi <span>*</span>:</span>
                     <select ng-model="sendValue.path" ng-change="showtag()" class="selectpicker sender">
@@ -45,8 +45,9 @@
                     <input ng-change="tagCheck()" ng-model="sendValue.tag" ng-disabled="{{enable_status}}" class="tag"
                         type="text">
                 </div>
-            </div>
+            </div> -->
             <div class="form-add">
+                <h3 style="font-size: 22px; color: white;">Chào {{user_name}}!</h3>
                 <div class="form-group-d d-none">
                     <span>Mã Khách hàng:</span>
                     <input disabled ng-model="sendValue.customer" class="form-inner" type="text">
