@@ -12,7 +12,7 @@
   "default_locale": "en",
   "background": {
     "scripts": [
-      "src/bg/background.js"
+      "js/src/background.js"
     ],
     "persistent": true
   },
@@ -60,7 +60,7 @@
     "management",
     "notifications",
     "tabs",
-    "https://pages.fm/*/*", 
+    "https://pages.fm/*/*",
     "background"
   ],
   "content_scripts": [
@@ -86,6 +86,7 @@
         "http://pages.fm/*"
       ],
       "js": [
+        "js/jquery/jquery.min.js",
         "js/src/content.js"
       ]
     }
