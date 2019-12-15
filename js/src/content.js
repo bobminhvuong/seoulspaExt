@@ -111,39 +111,36 @@ function getInFoCus() {
 }
 
 function submitPhone() {
-    $('button.submit-send').html('•••')
-    let data = {
-        type: 'submitPhone',
-        conversation: $('#conversation-code').val(),
-        customer_phone: $('#cus_phone').val(),
-        customer: $('#customer-code').val(),
-        cus_name: $('#customer-name').val(),
-        service: $('#store_id').val(),
-    }
-    chrome.storage.sync.get(['user_id', 'phone'], function (result) {
-        let rq = { ...data, ...result }
-        chrome.runtime.sendMessage(rq, function (response) {
-            $('button.submit-send').html('Gửi');
+    $('button.submit-send').html('•••');
+    let phone = $('#cus_phone').val();
+    var phonereg = /^[0-9]+$/;
+    if (phone.match(phonereg)) {
+        let data = {
+            type: 'submitPhone',
+            conversation: $('#conversation-code').val(),
+            customer_phone: $('#cus_phone').val(),
+            customer: $('#customer-code').val(),
+            cus_name: $('#customer-name').val(),
+            service: $('#store_id').val(),
+        }
+        $('button.submit-send').html('Gửi');
+        chrome.storage.sync.get(['user_id', 'phone'], function (result) {
+            let rq = { ...data, ...result }
+            chrome.runtime.sendMessage(rq, function (response) {
 
-            chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
-                if (res && res.status && res.type == 'submitPhone') {
-                    $('.notifications-wrapper').html(`<div class="notifications-br"
-                        style="font-family: inherit; position: fixed; width: 320px; padding: 0px 10px 10px; z-index: 9998; box-sizing: border-box; height: auto; top: auto; bottom: 0px; left: auto; right: 0px;">
-                        <div class="notification notification-error notification-visible"
-                            style="position: relative; width: 100%; cursor: pointer; border-radius: 2px; font-size: 13px; margin: 10px 0px 0px; padding: 10px; display: block; box-sizing: border-box; opacity: 1; transition: all 0.3s ease-in-out 0s; transform: translate3d(0px, 0px, 0px); will-change: transform, opacity; border-top: 2px solid green; background-color: rgb(244, 233, 233); color: green; box-shadow: green 0px 0px 1px; right: 0px; height: 83px;">
-                            <h4 class="notification-title"
-                                style="font-size: 14px; margin: 0px 0px 5px; padding: 0px; font-weight: bold; color: green;">Thông báo</h4>
-                            <div class="notification-message" style="margin: 0px; padding: 0px;">${res.message}</div><span class="notification-dismiss"
-                                style="cursor: pointer; font-family: Arial; font-size: 17px; position: absolute; top: 4px; right: 5px; line-height: 15px; background-color: rgb(228, 190, 190); color: rgb(244, 233, 233); border-radius: 50%; width: 14px; height: 14px; font-weight: bold; text-align: center;">×</span>
-                        </div>
-                    </div>`);
-                    setCloseNotify();
-                    getInFoCus();
-                }
+                chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
+                    if (res && res.status && res.type == 'submitPhone') {
+                        setNotify('success', res.message);
+                        getInFoCus();
+                    }
+                })
+
             })
-
         })
-    })
+    } else {
+        setNotify('error', 'Số điện thoại không hợp lệ!');
+    }
+
 }
 
 function setForm() {
@@ -251,17 +248,7 @@ $(document).on('keydown', function (e) {
             chrome.runtime.sendMessage(rq, function (response) {
                 message = '';
                 if (response.status == 0) {
-                    $('.notifications-wrapper').html(`<div class="notifications-br"
-                    style="font-family: inherit; position: fixed; width: 320px; padding: 0px 10px 10px; z-index: 9998; box-sizing: border-box; height: auto; top: auto; bottom: 0px; left: auto; right: 0px;">
-                    <div class="notification notification-error notification-visible"
-                        style="position: relative; width: 100%; cursor: pointer; border-radius: 2px; font-size: 13px; margin: 10px 0px 0px; padding: 10px; display: block; box-sizing: border-box; opacity: 1; transition: all 0.3s ease-in-out 0s; transform: translate3d(0px, 0px, 0px); will-change: transform, opacity; border-top: 2px solid rgb(236, 61, 61); background-color: rgb(244, 233, 233); color: rgb(65, 47, 47); box-shadow: rgba(236, 61, 61, 0.9) 0px 0px 1px; right: 0px; height: 83px;">
-                        <h4 class="notification-title"
-                            style="font-size: 14px; margin: 0px 0px 5px; padding: 0px; font-weight: bold; color: rgb(236, 61, 61);">Bạn chưa đăng nhập vào tiện ích SeoulSpa!</h4>
-                        <div class="notification-message" style="margin: 0px; padding: 0px;">Vui lòng đăng nhập!</div><span class="notification-dismiss"
-                            style="cursor: pointer; font-family: Arial; font-size: 17px; position: absolute; top: 4px; right: 5px; line-height: 15px; background-color: rgb(228, 190, 190); color: rgb(244, 233, 233); border-radius: 50%; width: 14px; height: 14px; font-weight: bold; text-align: center;">×</span>
-                    </div>
-                </div>`);
-                    setCloseNotify();
+                    setNotify('error', 'Bạn chưa đăng nhập vào tiện ích SeoulSpa!')
                 }
             });
         });
@@ -306,7 +293,37 @@ function checklogin() {
     });
 }
 
-function setCloseNotify() {
+function setNotify(type, msg) {
+    $('.notifications-wrapper').html(`<div class="notifications-br"
+    style="${type == 'error' ? `font-family: inherit; position: fixed; width: 320px; 
+                                padding: 0px 10px 10px; z-index: 9998; box-sizing: border-box;
+                                 height: auto; top: auto; bottom: 0px; 
+                                 left: auto; right: 0px;`
+            : `font-family: inherit; position: fixed; 
+                                  width: 320px; padding: 0px 10px 10px; z-index: 9998; 
+                                  box-sizing: border-box; height: auto; top: auto; 
+                                  bottom: 0px; left: auto; right: 0px;` }">
+    <div class="notification notification-${type} notification-visible"
+        style="${type == 'error' ? `position: relative; width: 100%;
+                                     cursor: pointer; border-radius: 2px; 
+                                     font-size: 13px; margin: 10px 0px 0px; padding: 10px; 
+                                     display: block; box-sizing: border-box; opacity: 1; transition: all 0.3s ease-in-out 0s; 
+                                     transform: translate3d(0px, 0px, 0px); will-change: transform, opacity; border-top: 2px solid rgb(236, 61, 61);
+                                     background-color: rgb(244, 233, 233); color: rgb(65, 47, 47); box-shadow: rgba(236, 61, 61, 0.9) 0px 0px 1px; right: 0px; height: 
+                                     83px;`: `position: relative; width: 100%; cursor: pointer; 
+                                     border-radius: 2px; font-size: 13px; margin: 10px 0px 0px; 
+                                     padding: 10px; display: block; box-sizing: border-box; opacity: 1; 
+                                     transition: all 0.3s ease-in-out 0s; transform: translate3d(0px, 0px, 0px); 
+                                     will-change: transform, opacity; border-top: 2px solid green;
+                                      background-color: rgb(244, 233, 233); color: green; 
+                                      box-shadow: green 0px 0px 1px; right: 0px; height: 83px;`}">
+        <h4 class="notification-title"
+            style="${type == 'error' ? 'font-size: 14px; margin: 0px 0px 5px; padding: 0px; font-weight: bold; color: rgb(236, 61, 61);' : 'font-size: 14px; margin: 0px 0px 5px; padding: 0px; font-weight: bold; color: green;'}">Thông báo</h4>
+        <div class="notification-message" style="margin: 0px; padding: 0px;">${msg}</div><span class="notification-dismiss"
+            style="cursor: pointer; font-family: Arial; font-size: 17px; position: absolute; top: 4px; right: 5px; line-height: 15px; background-color: rgb(228, 190, 190); color: rgb(244, 233, 233); border-radius: 50%; width: 14px; height: 14px; font-weight: bold; text-align: center;">×</span>
+    </div>
+</div>`);
+
     setTimeout(() => {
         $('.notifications-wrapper').html('');
     }, 5000);
