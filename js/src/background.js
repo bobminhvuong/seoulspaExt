@@ -129,7 +129,6 @@ function updateDataInboxSV(request) {
     if (result && result.inboxUserData.length > 0) {
       result.inboxUserData.forEach(element => {
         element.api_key = '1DB185DCFB40836B29BFC1A500E3EB';
-        element.user_id = element.user_id;
         element.conversation_code = element.inbox_id;
         element.latest_update = element.time;
       });

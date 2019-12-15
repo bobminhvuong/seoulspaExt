@@ -124,6 +124,7 @@ function submitPhone() {
         let rq = { ...data, ...result }
         chrome.runtime.sendMessage(rq, function (response) {
             $('button.submit-send').html('Gửi');
+
             chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
                 if (res && res.status && res.type == 'submitPhone') {
                     $('.notifications-wrapper').html(`<div class="notifications-br"
@@ -137,8 +138,10 @@ function submitPhone() {
                         </div>
                     </div>`);
                     setCloseNotify();
+                    getInFoCus();
                 }
             })
+
         })
     })
 }
@@ -157,8 +160,6 @@ function setForm() {
                         result.groupService.data.forEach(element => {
                             text_option = text_option + '<option value="' + element.id + '">' + element.name + '</option>'
                         });
-                        console.log(2);
-
                         $('#customerCol').html(`
                         <div class="my-test">
                             <div class="main-form">
@@ -248,10 +249,6 @@ $(document).on('keydown', function (e) {
         chrome.storage.sync.get(['phone', 'key', 'user_id', 'inboxUserData'], function (result) {
             let rq = { ...data, ...result }
             chrome.runtime.sendMessage(rq, function (response) {
-                console.log(rq);
-                
-                console.log(response);
-                
                 message = '';
                 if (response.status == 0) {
                     $('.notifications-wrapper').html(`<div class="notifications-br"
@@ -273,6 +270,12 @@ $(document).on('keydown', function (e) {
 
 function checklogin() {
     chrome.storage.sync.get(['key', 'last_update_inbox', 'phone', 'time_send'], function (data) {
+
+        //logout if diff now
+        let now = new Date().toJSON().slice(0, 10).replace(/-/g, '/');
+        if (data.key != now) chrome.storage.sync.remove(['key', 'phone', 'staffs', 'user_name', 'groupService'], function (result) { });
+
+
         if (typeof (data.key) == 'undefined') {
             $('#customerCol').html(`
             <div class="my-test">
@@ -281,70 +284,25 @@ function checklogin() {
                     <h3>Vui lòng đăng nhập để sử dụng tiện ích!</h3>
                 </div>
             </div>
-            `)
+            `);
         } else {
-            //-----------
-            let timeNow = new Date();
-            let s = timeNow - new Date(data.last_update_inbox);
-            //check time update list inbox
-            if (s && !isNaN(s) && s * 0.001 >= (Number(data.time_send) * 3600)) {
-                let data = {
-                    type: 'updateDataInbox'
-                }
-                chrome.runtime.sendMessage(data, function (response) {
-                    console.log(response);
-                })
-            }
-            //-----------
-            // var user_box = $('#pageCustomer');
-            // var user_name = user_box.attr('data-clipboard-text');
-            // var text_option = '';
-
-            // if (user_box.length > 0) {
-            //     if (!user_box.hasClass('active')) {
-            //         user_box.addClass('active');
-            //         chrome.storage.sync.get(['groupService'], function (result) {
-            //             var text_option = '';
-            //             result.groupService.data.forEach(element => {
-            //                 text_option = text_option + '<option value="' + element.id + '">' + element.name + '</option>'
-            //             });
-            //             $('#customerCol').html(`
-            //             <div class="my-test">
-            //                 <div class="main-form">
-            //                     <div class="form-group"> <label for="">Tên khách</label><input type="text" id="customer-name" disabled> </div>
-            //                     <div class="form-group" style="display:none;"><label for="">Mã khách hàng</label> <input type="text"
-            //                             id="customer-code" disabled> </div>
-            //                     <div class="form-group" style="display:none;"> <label for="">Mã cuộc hội thoại</label> <input type="text"
-            //                             disabled id="conversation-code"> </div>
-            //                     <div class="form-group"> <label for="">Số điện thoại</label> <input type="text" id="cus_phone"> </div>
-            //                     <div class="form-group"> <label for="">Dịch vụ cần tư vấn</label><select name="" id="store_id">' + ${text_option} +
-            //                             '</select> </div>
-            //                     <div class="form-group" style="margin-bottom: 0"> <button class="submit-send">Gửi</button> </div>
-            //                 </div>
-            //                 <div class="main-form main-two" style="margin-top: 20px;">
-            //                     <div class="cn"> <span class="tit">Chi nhánh:</span><span class="value">Chưa có</span></div>
-            //                     <div class="money"><span class="tit">Số tiền đã dùng:</span><span class="value">Chưa có</span></div>
-            //                     <div class="report"><span class="tit">Khiếu nại:</span><span class="value">Chưa có</span></div><input
-            //                         id="cus_id" style="display:none;">
-            //                     <div class="history_cus">Xem thêm lịch sử khách</div>
-            //                 </div>
-            //                 <div class="book-now">Đặt lịch ngay</div>
-            //             </div>`)
-            //         })
-            //     }
-            //     setTimeout(() => {
-            //         const cus_name = document.getElementById("pageCustomer").getAttribute('data-clipboard-text');
-            //         const forkUrl = document.getElementById("linkConversation").getAttribute('data-clipboard-text');
-            //         var url = forkUrl;
-            //         var search = url.indexOf('=');
-            //         var main_param = url.slice(search + 1);
-            //         var id_pos = main_param.indexOf('_');
-            //         $('#customer-name').val(cus_name);
-            //         $('#customer-code').val(main_param.slice(id_pos + 1));
-            //         $('#conversation-code').val(main_param);
-            //     }, 1000);
-            // }
+            $('#pageCustomer').removeClass("active");
         }
+        // function set update data inbox by time 
+        // else {
+        //     //-----------
+        //     let timeNow = new Date();
+        //     let s = timeNow - new Date(data.last_update_inbox);
+        //     //check time update list inbox
+        //     if (s && !isNaN(s) && s * 0.001 >= (Number(data.time_send) * 3600)) {
+        //         let data = {
+        //             type: 'updateDataInbox'
+        //         }
+        //         chrome.runtime.sendMessage(data, function (response) {
+        //             console.log(response);
+        //         })
+        //     }
+        // }
     });
 }
 
