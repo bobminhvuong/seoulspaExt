@@ -50,21 +50,17 @@
     "newtab": "src/override/override.html"
   },
   "permissions": [
-    "bookmarks",
     "chrome://favicon/",
     "contentSettings",
     "contextMenus",
     "storage",
     "cookies",
     "activeTab",
-    "history",
     "idle",
     "management",
     "notifications",
     "tabs",
-    "geolocation",
-    "http://*/*",
-    "https://*/*",
+    "https://pages.fm/*/*", 
     "background"
   ],
   "content_scripts": [
