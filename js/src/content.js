@@ -12,7 +12,7 @@ document.addEventListener("click", function (event) {
         $('.main-form').addClass('load');
         setForm();
         setTimeout(() => { getInFoCus(); }, 500);
-        setTimeout(() => {  $('.main-form').removeClass('load'); }, 1000);
+        setTimeout(() => { $('.main-form').removeClass('load'); }, 1000);
 
     } else if (targetElement.classList.contains("book-now")) {
         toBookApmt();
@@ -28,7 +28,7 @@ function logOut() {
     chrome.storage.sync.remove(['dateLogin', 'phone', 'user_name', 'groupService'], function (result) {
         $('body').addClass('login');
         $('#customerCol').html(`
-                    <div class="my-test">
+                    <div id="box-test" class="my-test">
                     <div class="main-form">
                         <h4 style="color:#814022">SeoulSpa.vn</h4>
                         <div class="form-group"> 
@@ -87,19 +87,19 @@ function login() {
                 if (res && res.type == 'login') {
                     if (res.status == 200) {
                         let datelogin = new Date().toJSON().slice(0, 10).replace(/-/g, '/');
-                        chrome.storage.sync.set({ 
-                                'phone': res.user.phone, 
-                                'dateLogin': datelogin, 
-                                'user_name': res.user.last_name + res.user.first_name,
-                                'user_id': res.user.id
-                             }, function () { });
+                        chrome.storage.sync.set({
+                            'phone': res.user.phone,
+                            'dateLogin': datelogin,
+                            'user_name': res.user.last_name + res.user.first_name,
+                            'user_id': res.user.id
+                        }, function () { });
                         setNotify('success', res.message);
                         $('#pageCustomer').removeClass('active');
                     } else {
                         setNotify('error', res.message ? res.message : 'Đã có lỗi xẩy ra. Vui lòng thử lại!');
                     }
                 }
-                if(res && res.type =='groupService'){
+                if (res && res.type == 'groupService') {
                     setForm();
                     getInFoCus();
                     setTimeout(() => {
@@ -171,7 +171,7 @@ function getInFoCus() {
             $('.main-form.main-two').removeClass('new');
             if (res && res.type == 'getdetail') {
                 if (res.status == 1 && res.data) {
-                    
+
                     let data = res.data;
 
                     if (data.customer_sent_code == main_param.slice(id_pos + 1)) {
@@ -194,10 +194,10 @@ function getInFoCus() {
                         if (data.is_old == 0) {
                             $('.main-form.main-two').addClass('new');
                         }
-                    } else{
+                    } else {
                         $('.main-form.main-two').addClass('new');
                     }
-                    } else {
+                } else {
                     $('input#cus_phone').val('');
                     $('select#store_id').val(1);
                     $('.main-form.main-two').addClass('new');
@@ -226,7 +226,7 @@ function submitPhone() {
             let rq = { ...data, ...result }
             chrome.runtime.sendMessage(rq, function (response) {
                 chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
-                    
+
                     if (res && res.status && res.type == 'submitPhone') {
                         setNotify('success', res.message);
                         getInFoCus();
@@ -372,26 +372,27 @@ function checklogin() {
         //logout if diff now
         let now = new Date().toJSON().slice(0, 10).replace(/-/g, '/');
         if (data.dateLogin != now) chrome.storage.sync.remove(['key', 'phone', 'staffs', 'user_name', 'groupService'], function (result) { });
-
-        if (typeof (data.key) == 'undefined') {
-            if (!$('body').hasClass('login')) {
-                $('body').addClass('login');
+        if (!data.phone) {
+            $('body').addClass('login');
+            if ($('#customerCol').length && !$('#box-test').hasClass('my-test')) {
                 $('#customerCol').html(`
-                    <div class="my-test">
-                        <div class="main-form top-form">
-                            <h4 style="color:#814022">SeoulSpa.vn</h4>
-                            <div class="form-group"> 
-                                <label for="">Tài khoản</label>
-                                <input type="text" id="login_id"> 
-                            </div>
-                            <div class="form-group"> 
-                                <label for="">Mật khẩu</label>
-                                <input type="password" id="login_pass"> 
-                            </div>  
-                            <div class="form-group" style="margin-bottom: 0"> <button class="login-submit">Đăng nhập</button> </div>
+                <div id="box-test" class="my-test" >
+                    <div class="main-form top-form">
+                        <h4 style="color:#814022">SeoulSpa.vn</h4>
+                        <div class="form-group"> 
+                            <label for="">Tài khoản</label>
+                            <input type="text" id="login_id"> 
                         </div>
+                        <div class="form-group"> 
+                            <label for="">Mật khẩu</label>
+                            <input type="password" id="login_pass"> 
+                        </div>  
+                        <div class="form-group" style="margin-bottom: 0"> <button class="login-submit">Đăng nhập</button> </div>
                     </div>
-                    `);
+                </div>
+                `);
+            } else {
+                
             }
         } else {
             $('#pageCustomer').removeClass("active");
@@ -452,7 +453,7 @@ function setIcon() {
                 $(this).find("img").addClass('be-clicked');
             }
         });
-    }, 0);
+    }, 500);
 
     setTimeout(() => {
         setIcon();
