@@ -87,7 +87,12 @@ function login() {
                 if (res && res.type == 'login') {
                     if (res.status == 200) {
                         let datelogin = new Date().toJSON().slice(0, 10).replace(/-/g, '/');
-                        chrome.storage.sync.set({ 'phone': res.user.phone, 'dateLogin': datelogin, 'user_name': res.user.last_name + res.user.first_name }, function () { });
+                        chrome.storage.sync.set({ 
+                                'phone': res.user.phone, 
+                                'dateLogin': datelogin, 
+                                'user_name': res.user.last_name + res.user.first_name,
+                                'user_id': res.user.id
+                             }, function () { });
                         setNotify('success', res.message);
                         $('#pageCustomer').removeClass('active');
                     } else {
@@ -221,6 +226,7 @@ function submitPhone() {
             let rq = { ...data, ...result }
             chrome.runtime.sendMessage(rq, function (response) {
                 chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
+                    
                     if (res && res.status && res.type == 'submitPhone') {
                         setNotify('success', res.message);
                         getInFoCus();
@@ -245,8 +251,6 @@ function setForm() {
                 if (!user_box.hasClass('active')) {
                     user_box.addClass('active');
                     chrome.storage.sync.get(['groupService'], function (result) {
-                        console.log('result', result);
-
                         var text_option = '';
                         result.groupService.data.forEach(element => {
                             text_option = text_option + '<option value="' + element.id + '">' + element.name + '</option>'

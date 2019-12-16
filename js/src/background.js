@@ -1,3 +1,4 @@
+var base_url = 'http://app.seoulspa.vn';
 
 chrome.runtime.onConnect.addListener(function (externalPort) {
   externalPort.onDisconnect.addListener(function () {
@@ -8,7 +9,6 @@ chrome.runtime.onConnect.addListener(function (externalPort) {
 })
 
 chrome.extension.onMessage.addListener(function (request, sender, sendResponse) {
-  let base_url = '';
   if (request.type == 'submitPhone') submitPhoneSV(request);
 
   if (request.type == 'getdetail') getCusDetailSV(request);
@@ -84,7 +84,7 @@ function sendMessageToContent(data) {
 
 function getGroupService_bg(phone) {
   if (phone) {
-    let base_url = phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
+    base_url = phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
     var arrSend = {
       "api_key": "1DB185DCFB40836B29BFC1A500E3EB",
     }
@@ -97,7 +97,7 @@ function getGroupService_bg(phone) {
       r.json().then(function (data) {
         if (data && data.status == 1) {
           chrome.storage.sync.set({ 'groupService': data }, function () { });
-          data.type ='groupService';
+          data.type = 'groupService';
           sendMessageToContent(data);
         } else {
           chrome.storage.sync.set({ 'groupService': { data: [] } }, function () { });
@@ -116,7 +116,7 @@ function sendAndClearData_bg() {
       element.latest_update = element.time;
     });
     if (result.inboxUserData.length > 0) {
-      var based_url = phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
+      based_url = phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
       fetch(based_url + '/api/index.php/pancake/api_update_detail_converesation', {
         method: 'post',
         body: JSON.stringify(result.inboxUserData)
@@ -158,18 +158,14 @@ function getCusDetailSV(request) {
     "cus_code": request.cus_code,
   }
   chrome.storage.sync.get(['phone'], function (result) {
-    if (result && result.phone == '000') {
-      base_url = 'http://dev.seoulspa.vn';
-    } else {
-      base_url = 'http://app.seoulspa.vn'
-    }
+
+    base_url = result.phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
+
     fetch(base_url + '/api/index.php/pancake/GetCustomerInfor', {
       method: 'post',
       body: JSON.stringify(arrSend)
     }).then(r => {
       r.json().then(function (data) {
-        console.log(data);
-        
         data.type = "getdetail";
         sendMessageToContent(data);
       })
@@ -197,6 +193,7 @@ function updateDataInboxSV(request) {
   })
 }
 function login(phone, pass) {
+  let base_url = phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
   if (phone == '000' && pass == '123') {
     let data = {
       message: 'Login thành công vào dev',
