@@ -3,23 +3,48 @@ var message = '';
 setIcon();
 setStyleBox();
 
-
 document.addEventListener("click", function (event) {
     var targetElement = event.target || event.srcElement;
     if (targetElement.classList.contains("submit-send")) {
         submitPhone();
     } else if (targetElement.classList.contains("be-clicked")) {
         $('.main-form.main-two').addClass('load');
+        $('.main-form').addClass('load');
         setForm();
-        setTimeout(() => { getInFoCus();}, 500);
-        
+        setTimeout(() => { getInFoCus(); }, 500);
+        setTimeout(() => {  $('.main-form').removeClass('load'); }, 1000);
+
     } else if (targetElement.classList.contains("book-now")) {
         toBookApmt();
     } else if (targetElement.classList.contains("history_cus")) {
         toHistory();
+    } else if (targetElement.classList.contains("logout-sub")) {
+        logOut();
+    } else if (targetElement.classList.contains("login-submit")) {
+        login();
     }
 });
-
+function logOut() {
+    chrome.storage.sync.remove(['dateLogin', 'phone', 'user_name', 'groupService'], function (result) {
+        $('body').addClass('login');
+        $('#customerCol').html(`
+                    <div class="my-test">
+                    <div class="main-form">
+                        <h4 style="color:#814022">SeoulSpa.vn</h4>
+                        <div class="form-group"> 
+                            <label for="">Tài khoản</label>
+                            <input type="text" id="login_id"> 
+                        </div>
+                        <div class="form-group"> 
+                            <label for="">Mật khẩu</label>
+                            <input type="password" id="login_pass"> 
+                        </div>  
+                        <div class="form-group" style="margin-bottom: 0"> <button class="login-submit">Đăng nhập</button> </div>
+                    </div>
+            </div>
+        `);
+    });
+}
 function show_icon() {
     var phone_tag = $('.phone-tag');
     phone_tag.each(function () {
@@ -37,6 +62,62 @@ function show_icon() {
 }
 
 
+
+function sendAndClearData() {
+    let data = {
+        type: 'sendAndClear',
+    }
+    chrome.runtime.sendMessage(data, function (response) { })
+}
+
+function login() {
+    var login_id = $('#login_id').val();
+    var login_pass = $('#login_pass').val();
+
+    if (!login_id || login_id == "" || !login_pass || login_pass == "") {
+        setNotify('error', 'Thông tin đăng nhập không đúng!');
+    } else {
+        let data = {
+            phone: login_id,
+            password: login_pass,
+            type: 'login'
+        }
+        chrome.runtime.sendMessage(data, function (response) {
+            chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
+                if (res && res.type == 'login') {
+                    if (res.status == 200) {
+                        let datelogin = new Date().toJSON().slice(0, 10).replace(/-/g, '/');
+                        chrome.storage.sync.set({ 'phone': res.user.phone, 'dateLogin': datelogin, 'user_name': res.user.last_name + res.user.first_name }, function () { });
+                        setNotify('success', res.message);
+                        $('#pageCustomer').removeClass('active');
+                    } else {
+                        setNotify('error', res.message ? res.message : 'Đã có lỗi xẩy ra. Vui lòng thử lại!');
+                    }
+                }
+                if(res && res.type =='groupService'){
+                    setForm();
+                    getInFoCus();
+                    setTimeout(() => {
+                        chrome.storage.sync.get(['user_name'], function (result) {
+                            $('.staff-name').html(result.user_name);
+                        })
+                    }, 200);
+                }
+            })
+        })
+    }
+}
+
+function getGroupService() {
+    chrome.storage.sync.get(['phone'], function (result) {
+        let data = {
+            type: 'getGroupServices',
+            phone: result.phone
+        }
+        chrome.runtime.sendMessage(data, function (response) { })
+    });
+
+}
 function toBookApmt() {
     var customer_phone = $('input#cus_phone').val();
     var customer_name = $('#customer-name').val();
@@ -85,29 +166,35 @@ function getInFoCus() {
             $('.main-form.main-two').removeClass('new');
             if (res && res.type == 'getdetail') {
                 if (res.status == 1 && res.data) {
+                    
                     let data = res.data;
-                    $('input#cus_phone').val(data.customer_phone);
-                    $('input#cus_id').val(data.id);
-                    console.log('data.total', data);
 
-                    if (data.description != null) {
-                        $('.cn span.value').html(data.description);
-                    }
-                    if (data.total != null) {
-                        x = data.total.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
-                        $('.money span.value').html(x + 'VNĐ');
-                    }
-                    if (data.total_com != null) {
-                        $('.report span.value').html(data.total_com + ' lần');
-                    }
-                    if (data.service != null) {
-                        $('#store_id').val(data.service);
-                    }
-                    if (data.is_old == 0) {
+                    if (data.customer_sent_code == main_param.slice(id_pos + 1)) {
+                        $('input#cus_phone').val(data.customer_phone);
+                        $('input#cus_id').val(data.id);
+
+                        if (data.description != null) {
+                            $('.cn span.value').html(data.description);
+                        }
+                        if (data.total != null) {
+                            x = data.total.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
+                            $('.money span.value').html(x + 'VNĐ');
+                        }
+                        if (data.total_com != null) {
+                            $('.report span.value').html(data.total_com + ' lần');
+                        }
+                        if (data.service != null) {
+                            $('#store_id').val(data.service);
+                        }
+                        if (data.is_old == 0) {
+                            $('.main-form.main-two').addClass('new');
+                        }
+                    } else{
                         $('.main-form.main-two').addClass('new');
                     }
-                } else {
+                    } else {
                     $('input#cus_phone').val('');
+                    $('select#store_id').val(1);
                     $('.main-form.main-two').addClass('new');
                 }
             }
@@ -158,12 +245,18 @@ function setForm() {
                 if (!user_box.hasClass('active')) {
                     user_box.addClass('active');
                     chrome.storage.sync.get(['groupService'], function (result) {
+                        console.log('result', result);
+
                         var text_option = '';
                         result.groupService.data.forEach(element => {
                             text_option = text_option + '<option value="' + element.id + '">' + element.name + '</option>'
                         });
                         $('#customerCol').html(`
                         <div class="my-test">
+                            <div class="staff-name"></div>
+                            <div style="text-align: right;">
+                                <div class="logout-sub">Đăng xuất</div>
+                            </div>
                             <div class="main-form">
                                 <div class="form-group"> <label for="">Tên khách</label><input type="text" id="customer-name" disabled> </div>
                                 <div class="form-group" style="display:none;"><label for="">Mã khách hàng</label> <input type="text"
@@ -204,6 +297,15 @@ function setForm() {
                 <div class="main-form">
                     <h4 style="color:#814022">SeoulSpa.vn</h4>
                     <h3>Vui lòng đăng nhập để sử dụng tiện ích!</h3>
+                    <div class="form-group"> 
+                        <label for="">Tài khoản</label>
+                        <input type="text" id="login_id"> 
+                    </div>
+                    <div class="form-group"> 
+                        <label for="">Mật khẩu</label>
+                        <input type="password" id="login_pass"> 
+                    </div>
+                    <div class="form-group" style="margin-bottom: 0"> <button class="login-submit">Đăng nhập</button> </div>
                 </div>
             </div>
             `)
@@ -261,41 +363,37 @@ $(document).on('keydown', function (e) {
 });
 
 function checklogin() {
-    chrome.storage.sync.get(['key', 'last_update_inbox', 'phone', 'time_send'], function (data) {
 
+    chrome.storage.sync.get(['dateLogin', 'last_update_inbox', 'phone', 'time_send'], function (data) {
         //logout if diff now
         let now = new Date().toJSON().slice(0, 10).replace(/-/g, '/');
-        if (data.key != now) chrome.storage.sync.remove(['key', 'phone', 'staffs', 'user_name', 'groupService'], function (result) { });
-
+        if (data.dateLogin != now) chrome.storage.sync.remove(['key', 'phone', 'staffs', 'user_name', 'groupService'], function (result) { });
 
         if (typeof (data.key) == 'undefined') {
-            $('#customerCol').html(`
-            <div class="my-test">
-                <div class="main-form">
-                    <h4 style="color:#814022">SeoulSpa.vn</h4>
-                    <h3>Vui lòng đăng nhập để sử dụng tiện ích!</h3>
-                </div>
-            </div>
-            `);
+            if (!$('body').hasClass('login')) {
+                $('body').addClass('login');
+                $('#customerCol').html(`
+                    <div class="my-test">
+                        <div class="main-form top-form">
+                            <h4 style="color:#814022">SeoulSpa.vn</h4>
+                            <div class="form-group"> 
+                                <label for="">Tài khoản</label>
+                                <input type="text" id="login_id"> 
+                            </div>
+                            <div class="form-group"> 
+                                <label for="">Mật khẩu</label>
+                                <input type="password" id="login_pass"> 
+                            </div>  
+                            <div class="form-group" style="margin-bottom: 0"> <button class="login-submit">Đăng nhập</button> </div>
+                        </div>
+                    </div>
+                    `);
+            }
         } else {
             $('#pageCustomer').removeClass("active");
         }
-        // function set update data inbox by time 
-        // else {
-        //     //-----------
-        //     let timeNow = new Date();
-        //     let s = timeNow - new Date(data.last_update_inbox);
-        //     //check time update list inbox
-        //     if (s && !isNaN(s) && s * 0.001 >= (Number(data.time_send) * 3600)) {
-        //         let data = {
-        //             type: 'updateDataInbox'
-        //         }
-        //         chrome.runtime.sendMessage(data, function (response) {
-        //             console.log(response);
-        //         })
-        //     }
-        // }
     });
+
 }
 
 function setNotify(type, msg) {
@@ -337,7 +435,9 @@ function setNotify(type, msg) {
 function setIcon() {
     show_icon();
     checklogin();
-
+    chrome.storage.sync.get(['user_name'], function (result) {
+        $('.staff-name').html(result.user_name);
+    })
     setTimeout(() => {
         var temp = $('.media.conversation-list-item');
         temp.each(function (index) {
@@ -404,7 +504,7 @@ function setStyleBox() {
                     border-radius: 3px;background: white; 
                     padding: 15px;
                 }
-                button.submit-send{
+                button.submit-send, .login-submit{
                     width: 100%; height: 35px;
                     margin-top: 20px; 
                     padding: 0px 20px; 
@@ -427,15 +527,11 @@ function setStyleBox() {
                 .main-form.main-two > div{
                     margin-bottom: 5px;
                 } 
-                .main-form.main-two.load:before{
-                    content: "Đang tải..."; 
-                    position: absolute; 
-                    width: 95%; 
-                    height: 90%;
-                    background: white; 
-                    top: 50%; left: 50%; 
-                    transform: translate(-50%, -50%); 
-                    padding: 15px; z-index: 99;
+                .staff-name {
+                    font-size: 18px;
+                    color: white;
+                    text-align: right;
+                    font-weight: bold;
                 }
                 .main-form.main-two.new:after{
                     content: "Khách mới"; 
@@ -445,6 +541,14 @@ function setStyleBox() {
                     top: 50%; left: 50%; 
                     transform: translate(-50%, -50%); 
                     padding: 15px; z-index: 98;
+                }
+                .logout-sub {
+                    color: white;
+                    font-size: 12px;
+                    text-align: right;
+                    text-decoration: underline;
+                    cursor: pointer;
+                    display: inline-block;
                 }
                 .book-now{ 
                     cursor: pointer;
@@ -463,6 +567,19 @@ function setStyleBox() {
                     cursor: pointer; 
                     color: blue; 
                     font-size: 12px;
+                }
+                .main-form.load:before {
+                    content: url(http://app.seoulspa.vn/assets/images/load.svg);
+                    position: absolute;
+                    width: 100%;
+                    height: 100%;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    top: 0;
+                    left: 0;
+                    background: rgba(255, 255, 255, 0.43);
+                    z-index: 999;
                 }
             </style>`);
 }

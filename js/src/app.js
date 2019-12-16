@@ -30,7 +30,6 @@ angular.module('app', [])
     });
 
     $scope.login = () => {
-
       if (!$scope.login.id || $scope.login.id == "" || !$scope.login.password || $scope.login.password == "") {
         $.notify('Lỗi', 'error');
 

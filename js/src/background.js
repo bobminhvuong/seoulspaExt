@@ -13,10 +13,15 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
 
   if (request.type == 'getdetail') getCusDetailSV(request);
 
+  if (request.type == 'sendAndClear') sendAndClearData_bg();
+
   if (request.type == 'updateDataInbox') {
     sendResponse({ status: 1, message: "Call api update has oke" });
     updateDataInboxSV();
   }
+  if (request.type == 'getGroupServices') { getGroupService_bg(request.phone); }
+
+  if (request.type == 'login') login(request.phone, request.password);
 
   if (request.type == 'key') {
 
@@ -77,6 +82,52 @@ function sendMessageToContent(data) {
   });
 }
 
+function getGroupService_bg(phone) {
+  if (phone) {
+    let base_url = phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
+    var arrSend = {
+      "api_key": "1DB185DCFB40836B29BFC1A500E3EB",
+    }
+    chrome.storage.sync.set({ 'groupService': { data: [] } }, function () { });
+
+    fetch(base_url + '/api/index.php/pancake/GetGroupServices', {
+      method: 'post',
+      body: JSON.stringify(arrSend)
+    }).then(r => {
+      r.json().then(function (data) {
+        if (data && data.status == 1) {
+          chrome.storage.sync.set({ 'groupService': data }, function () { });
+          data.type ='groupService';
+          sendMessageToContent(data);
+        } else {
+          chrome.storage.sync.set({ 'groupService': { data: [] } }, function () { });
+        }
+      })
+    })
+  }
+}
+
+function sendAndClearData_bg() {
+  chrome.storage.sync.get(['inboxUserData'], function (result) {
+    result.inboxUserData.forEach(element => {
+      element.api_key = '1DB185DCFB40836B29BFC1A500E3EB';
+      element.user_id = element.user_id;
+      element.conversation_code = element.inbox_id;
+      element.latest_update = element.time;
+    });
+    if (result.inboxUserData.length > 0) {
+      var based_url = phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
+      fetch(based_url + '/api/index.php/pancake/api_update_detail_converesation', {
+        method: 'post',
+        body: JSON.stringify(result.inboxUserData)
+      }).then(r => {
+        r.json().then(function (data) { console.log(data); })
+      })
+    }
+    chrome.storage.sync.set({ 'inboxUserData': [], 'last_update_inbox': (new Date()).toISOString() }, function () { });
+  })
+}
+
 function submitPhoneSV(request) {
   let today = new Date();
   let arrSend = {
@@ -118,6 +169,7 @@ function getCusDetailSV(request) {
     }).then(r => {
       r.json().then(function (data) {
         console.log(data);
+        
         data.type = "getdetail";
         sendMessageToContent(data);
       })
@@ -144,4 +196,38 @@ function updateDataInboxSV(request) {
     }
   })
 }
+function login(phone, pass) {
+  if (phone == '000' && pass == '123') {
+    let data = {
+      message: 'Login thành công vào dev',
+      status: 200,
+      type: 'login',
+      user: {
+        id: 1323,
+        phone: '000',
+        first_name: 'Dev ',
+        last_name: 'Điểm nhấn '
+      }
+    }
+    getGroupService_bg('000');
+    sendMessageToContent(data);
+  } else {
+    var arrSend = {
+      "api_key": "1DB185DCFB40836B29BFC1A500E3EB",
+      "identity": phone,
+      "password": pass
+    }
+    fetch(base_url + '/api/index.php/user/login', {
+      method: 'post',
+      body: JSON.stringify(arrSend)
+    }).then(r => {
+      r.json().then(function (data) {
+        data.type = 'login';
+        sendMessageToContent(data);
+        getGroupService_bg(data.user.phone);
+      })
+    })
+  }
+}
+
 
