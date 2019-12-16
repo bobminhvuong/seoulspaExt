@@ -11,7 +11,8 @@ document.addEventListener("click", function (event) {
     } else if (targetElement.classList.contains("be-clicked")) {
         $('.main-form.main-two').addClass('load');
         setForm();
-        getInFoCus();
+        setTimeout(() => { getInFoCus();}, 500);
+        
     } else if (targetElement.classList.contains("book-now")) {
         toBookApmt();
     } else if (targetElement.classList.contains("history_cus")) {
@@ -85,21 +86,26 @@ function getInFoCus() {
             if (res && res.type == 'getdetail') {
                 if (res.status == 1 && res.data) {
                     let data = res.data;
-                    if (data.description != null || data.description != '') {
+                    $('input#cus_phone').val(data.customer_phone);
+                    $('input#cus_id').val(data.id);
+                    console.log('data.total', data);
+
+                    if (data.description != null) {
                         $('.cn span.value').html(data.description);
                     }
-                    if (data.total != null || data.total != '') {
+                    if (data.total != null) {
                         x = data.total.replace(/(\d)(?=(\d{3})+(?!\d))/g, "$1.");
                         $('.money span.value').html(x + 'VNĐ');
                     }
-                    if (data.total_com != null || data.total_com != '') {
+                    if (data.total_com != null) {
                         $('.report span.value').html(data.total_com + ' lần');
                     }
-                    if (data.service != null || data.service != '') {
+                    if (data.service != null) {
                         $('#store_id').val(data.service);
                     }
-                    $('input#cus_phone').val(data.customer_phone);
-                    $('input#cus_id').val(data.id)
+                    if (data.is_old == 0) {
+                        $('.main-form.main-two').addClass('new');
+                    }
                 } else {
                     $('input#cus_phone').val('');
                     $('.main-form.main-two').addClass('new');
@@ -127,7 +133,6 @@ function submitPhone() {
         chrome.storage.sync.get(['user_id', 'phone'], function (result) {
             let rq = { ...data, ...result }
             chrome.runtime.sendMessage(rq, function (response) {
-
                 chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
                     if (res && res.status && res.type == 'submitPhone') {
                         setNotify('success', res.message);

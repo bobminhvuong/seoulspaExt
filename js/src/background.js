@@ -117,6 +117,7 @@ function getCusDetailSV(request) {
       body: JSON.stringify(arrSend)
     }).then(r => {
       r.json().then(function (data) {
+        console.log(data);
         data.type = "getdetail";
         sendMessageToContent(data);
       })
