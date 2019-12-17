@@ -212,37 +212,45 @@ function submitPhone() {
     $('button.submit-send').html('•••');
     let phone = $('#cus_phone').val();
     var phonereg = /^[0-9]+$/;
+    let service_id = $('#store_id').val();
     if (phone.match(phonereg)) {
-        let data = {
-            type: 'submitPhone',
-            conversation: $('#conversation-code').val(),
-            customer_phone: $('#cus_phone').val(),
-            customer: $('#customer-code').val(),
-            cus_name: $('#customer-name').val(),
-            service: $('#store_id').val(),
-        }
-        $('button.submit-send').html('Gửi');
-        chrome.storage.sync.get(['user_id', 'phone'], function (result) {
-            let rq = { ...data, ...result }
-            chrome.runtime.sendMessage(rq, function (response) {
-                chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
+        if (service_id && service_id > 0) {
+            let data = {
+                type: 'submitPhone',
+                conversation: $('#conversation-code').val(),
+                customer_phone: $('#cus_phone').val(),
+                customer: $('#customer-code').val(),
+                cus_name: $('#customer-name').val(),
+                service: service_id,
+            }
+            $('button.submit-send').html('Gửi');
+            chrome.storage.sync.get(['user_id', 'phone'], function (result) {
+                let rq = { ...data, ...result }
+                chrome.runtime.sendMessage(rq, function (response) {
+                    chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
 
-                    if (res && res.status && res.type == 'submitPhone') {
-                        setNotify('success', res.message);
-                        getInFoCus();
-                    }
+                        if (res && res.status && res.type == 'submitPhone') {
+                            setNotify('success', res.message);
+                            getInFoCus();
+                        }
+                    })
+
                 })
-
             })
-        })
+        } else {
+            setNotify('error', 'Chọn dịch vụ tư vấn!');
+            $('button.submit-send').html('Gửi');
+        }
+
     } else {
         setNotify('error', 'Số điện thoại không hợp lệ!');
+        $('button.submit-send').html('Gửi');
     }
 
 }
 
 function setForm() {
-    chrome.storage.sync.get(['phone'], function (data) {
+    chrome.storage.sync.get(['phone', 'user_name'], function (data) {
         if (data.phone) {
             var user_box = $('#pageCustomer');
             var user_name = user_box.attr('data-clipboard-text');
@@ -251,7 +259,7 @@ function setForm() {
                 if (!user_box.hasClass('active')) {
                     user_box.addClass('active');
                     chrome.storage.sync.get(['groupService'], function (result) {
-                        var text_option = '';
+                        var text_option = '<option value="0" selected>-- không --</option>';
                         result.groupService.data.forEach(element => {
                             text_option = text_option + '<option value="' + element.id + '">' + element.name + '</option>'
                         });
@@ -294,6 +302,15 @@ function setForm() {
                     $('#customer-code').val(main_param.slice(id_pos + 1));
                     $('#conversation-code').val(main_param);
                 }, 500);
+            } else {
+                $('#customerCol').html(`
+                <div class="my-test">
+                    <div class="main-form">
+                        <h4 style="color:#814022">SeoulSpa.vn</h4>
+                        <h4>Xin chào: ${data.user_name}</h4>
+                    </div>
+                </div>
+                `)
             }
         } else {
             $('#customerCol').html(`
@@ -340,7 +357,12 @@ $(document).on('keydown', function (e) {
         }
     });
 
-
+    // if(e.which == 13 && !e.shiftKey){
+    //     let phone = $('#login_id').val();
+    //     if(phone && $('#login_id').length){
+    //         login();
+    //     }
+    // }
     if (e.which == 13 && !e.shiftKey && message != '' && !$('svg').hasClass('message-action')) {
         const forkUrl = document.getElementById("linkConversation").getAttribute('data-clipboard-text');
         const cus_name = document.getElementById("pageCustomer").getAttribute('data-clipboard-text');
@@ -392,7 +414,7 @@ function checklogin() {
                 </div>
                 `);
             } else {
-                
+
             }
         } else {
             $('#pageCustomer').removeClass("active");
