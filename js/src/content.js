@@ -3,6 +3,15 @@ var message = '';
 setIcon();
 setStyleBox();
 
+setTimeout(() => {
+    $(document).ready(function(){
+        console.log(1);
+        $('.conversation-list-item').on('click', '.inbox-content', function(){
+            console.log(1);
+        })
+    })    
+}, 500);
+
 document.addEventListener("click", function (event) {
     var targetElement = event.target || event.srcElement;
     if (targetElement.classList.contains("submit-send")) {
@@ -22,8 +31,46 @@ document.addEventListener("click", function (event) {
         logOut();
     } else if (targetElement.classList.contains("login-submit")) {
         login();
+    }  else if (targetElement.classList.contains("see-more")) {
+        viewDetailInfor();
+    } else if (targetElement.classList.contains("note-seemore")) {
+        viewDetailNote();
     }
 });
+function viewDetailNote (){
+    if($('.note-onindex').hasClass('active')){
+        $('.note-onindex').removeClass('active');
+        $('.note-seemore').html('Xem thêm ghi chú');
+    } else {
+        $('.note-seemore').html('Đóng');
+        $('.note-onindex').addClass('active');
+    }
+    const forkUrl = document.getElementById("linkConversation").getAttribute('data-clipboard-text');
+    var url = forkUrl;
+    var search = url.indexOf('=');
+    var main_param = url.slice(search + 1);
+    var id_pos = main_param.indexOf('_');
+    let data = {
+        type: 'getNoteDetail',
+        cus_code: main_param.slice(id_pos + 1),
+    }
+    chrome.runtime.sendMessage(data, function (response) { 
+        chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
+            if (res && res.status && res.type == 'getNoteDetail') {
+                
+            }
+        })
+    })
+}
+function viewDetailInfor(){
+    if($('.on-index').hasClass('active')){
+        $('.on-index').removeClass('active');
+        $('.see-more').html('Xem');
+    } else {
+        $('.see-more').html('Đóng');
+        $('.on-index').addClass('active');
+    }
+}
 function logOut() {
     chrome.storage.sync.remove(['dateLogin', 'phone', 'user_name', 'groupService'], function (result) {
         $('body').addClass('login');
@@ -149,7 +196,7 @@ function toHistory() {
         } else {
             base_url = 'http://app.seoulspa.vn'
         }
-        var url = base_url + 'customers/history/' + customer_id + '';
+        var url = base_url + '/customers/history/' + customer_id + '';
         window.open(url, '_blank');
     })
 }
@@ -160,20 +207,22 @@ function getInFoCus() {
     var search = url.indexOf('=');
     var main_param = url.slice(search + 1);
     var id_pos = main_param.indexOf('_');
+
+    
     let data = {
         type: 'getdetail',
-        cus_code: main_param.slice(id_pos + 1)
+        cus_code: main_param.slice(id_pos + 1),
+        page_id: main_param.slice(0,id_pos),
     }
+
     chrome.runtime.sendMessage(data, function (response) {
         //on data when get api get customer detail
         chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
             $('.main-form.main-two').removeClass('load');
-            $('.main-form.main-two').removeClass('new');
+
             if (res && res.type == 'getdetail') {
                 if (res.status == 1 && res.data) {
-
                     let data = res.data;
-
                     if (data.customer_sent_code == main_param.slice(id_pos + 1)) {
                         $('input#cus_phone').val(data.customer_phone);
                         $('input#cus_id').val(data.id);
@@ -191,11 +240,17 @@ function getInFoCus() {
                         if (data.service != null) {
                             $('#store_id').val(data.service);
                         }
+                        if (data.note != null) {
+                            $('#cus_note').val(data.note);
+                        }
                         if (data.is_old == 0) {
-                            $('.main-form.main-two').addClass('new');
+                            $('.customer-status').html('Khách mới');
+                        }else{
+                            $('.customer-status').html('Khách cũ');
+                            $('.customer-status').append('<div class="see-more">Xem</div>')
                         }
                     } else {
-                        $('.main-form.main-two').addClass('new');
+                        $('.customer-status').html('Khách mới');
                     }
                 } else {
                     $('input#cus_phone').val('');
@@ -221,17 +276,24 @@ function submitPhone() {
                 customer_phone: $('#cus_phone').val(),
                 customer: $('#customer-code').val(),
                 cus_name: $('#customer-name').val(),
+                note: $('#cus_note').val(),
                 service: service_id,
             }
             $('button.submit-send').html('Gửi');
             chrome.storage.sync.get(['user_id', 'phone'], function (result) {
                 let rq = { ...data, ...result }
+
+                console.log('rq in content', rq);
+                
                 chrome.runtime.sendMessage(rq, function (response) {
                     chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
-
                         if (res && res.status && res.type == 'submitPhone') {
-                            setNotify('success', res.message);
-                            getInFoCus();
+                            if(res.status == 400){
+                                setNotify('error', res.message);
+                            } else{
+                                setNotify('success', res.message);
+                                getInFoCus();
+                            }
                         }
                     })
 
@@ -276,16 +338,25 @@ function setForm() {
                                 <div class="form-group" style="display:none;"> <label for="">Mã cuộc hội thoại</label> <input type="text"
                                         disabled id="conversation-code"> </div>
                                 <div class="form-group"> <label for="">Số điện thoại</label> <input type="text" id="cus_phone"> </div>
-                                <div class="form-group"> <label for="">Dịch vụ cần tư vấn</label><select name="" id="store_id">' + ${text_option} +
-                                        '</select> </div>
+                                <div class="form-group">
+                                    <label for="">Dịch vụ cần tư vấn</label>
+                                    <select name="" id="store_id">' + ${text_option} +'</select> </div>
+                                <div class="form-group" style="position: relative;">
+                                     <label for="" style="position: relative;">Ghi chú
+                                    </label>
+                                      <textarea id="cus_note" rows="3" > </textarea>
+                                </div>
                                 <div class="form-group" style="margin-bottom: 0"> <button class="submit-send">Gửi</button> </div>
                             </div>
-                            <div class="main-form main-two" style="margin-top: 20px;">
-                                <div class="cn"> <span class="tit">Chi nhánh:</span><span class="value">Chưa có</span></div>
-                                <div class="money"><span class="tit">Số tiền đã dùng:</span><span class="value">Chưa có</span></div>
-                                <div class="report"><span class="tit">Khiếu nại:</span><span class="value">Chưa có</span></div><input
-                                    id="cus_id" style="display:none;">
-                                <div class="history_cus">Xem thêm lịch sử khách</div>
+                            <div class="main-form main-two" style="margin-top: 15px; padding: 10px;">
+                                <div class="customer-status" style="margin:0">Khách mới</div>    
+                                <div class="on-index">
+                                    <div class="cn"> <span class="tit">Chi nhánh:</span><span class="value">Chưa có</span></div>
+                                    <div class="money"><span class="tit">Số tiền đã dùng:</span><span class="value">Chưa có</span></div>
+                                    <div class="report"><span class="tit">Khiếu nại:</span><span class="value">Chưa có</span></div><input
+                                        id="cus_id" style="display:none;">
+                                    <div class="history_cus">Xem thêm lịch sử khách</div>
+                                </div>
                             </div>
                             <div class="book-now">Đặt lịch ngay</div>
                         </div>`)
@@ -488,8 +559,26 @@ function setStyleBox() {
 
     $('head').append(`<style>
                 #customerCol{position:relative;}
+                .on-index, .note-onindex{
+                    position: absolute;
+                    background: white;
+                    right: 0;
+                    opacity: 0;
+                    width: 100%;
+                    top: 0;
+                    padding: 10px;
+                    border-radius: 3px;
+                    transition: .2s all linear;
+                    z-index: 0;
+                    visibility: hidden;
+                }
+                .on-index.active, .note-onindex.active{
+                    right:100%;
+                    opacity: 1;
+                    visibility: unset;
+                }
                 .my-test{
-                    padding: 30px 15px;
+                    padding: 10px 15px;
                     position: absolute; 
                     width: 100%; 
                     height: 100%; top:0; 
@@ -511,7 +600,7 @@ function setStyleBox() {
                     width: 100%
                     ;font-size: 13px;
                 }
-                .form-group input, .form-group select{
+                .form-group input, .form-group select, .form-group textarea{
                     width: 100%;
                     height: 25px; 
                     padding: 0px 10px; 
@@ -525,6 +614,10 @@ function setStyleBox() {
                     -webkit-box-shadow: inset 1px 1px 0px rgba(0,0,0,0.05), 1px 1px 0px rgba(255,255,255,1); 
                     -moz-box-shadow: inset 1px 1px 0px rgba(0,0,0,0.05), 1px 1px 0px rgba(255,255,255,1); 
                     box-shadow: inset 1px 1px 0px rgba(0,0,0,0.05), 1px 1px 0px rgba(255,255,255,1);
+                }
+                .form-group textarea{
+                    height: auto;
+                    padding-top:5px
                 }
                 .main-form{
                     position: relative; 
@@ -560,15 +653,6 @@ function setStyleBox() {
                     text-align: right;
                     font-weight: bold;
                 }
-                .main-form.main-two.new:after{
-                    content: "Khách mới"; 
-                    position: absolute; 
-                    width: 95%; height: 90%; 
-                    background: white; 
-                    top: 50%; left: 50%; 
-                    transform: translate(-50%, -50%); 
-                    padding: 15px; z-index: 98;
-                }
                 .logout-sub {
                     color: white;
                     font-size: 12px;
@@ -576,6 +660,18 @@ function setStyleBox() {
                     text-decoration: underline;
                     cursor: pointer;
                     display: inline-block;
+                }
+                .see-more, .note-seemore {
+                    position: absolute;
+                    top: 50%;
+                    right: 15px;
+                    transform: translateY(-50%);
+                    color: blue;
+                    font-weight: normal;
+                    font-size: 12px;
+                    text-decoration: underline;
+                    z-index: 999;
+                    cursor: pointer;
                 }
                 .book-now{ 
                     cursor: pointer;
@@ -607,6 +703,11 @@ function setStyleBox() {
                     left: 0;
                     background: rgba(255, 255, 255, 0.43);
                     z-index: 999;
+                }
+                .customer-status {
+                    position: relative;
+                    line-height: 22px;
+                    font-weight: bold;
                 }
             </style>`);
 }
