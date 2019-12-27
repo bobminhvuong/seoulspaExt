@@ -1,26 +1,20 @@
 console.log('Connect to SeoulSpa extention!');
 var message = '';
 setIcon();
+setClicked();
 setStyleBox();
-
-setTimeout(() => {
-    $(document).ready(function(){
-        console.log(1);
-        $('.conversation-list-item').on('click', '.inbox-content', function(){
-            console.log(1);
-        })
-    })    
-}, 500);
+set_select2();
 
 document.addEventListener("click", function (event) {
     var targetElement = event.target || event.srcElement;
     if (targetElement.classList.contains("submit-send")) {
         submitPhone();
-    } else if (targetElement.classList.contains("be-clicked")) {
+    } 
+    else if (targetElement.classList.contains("be-clicked")) {
         $('.main-form.main-two').addClass('load');
         $('.main-form').addClass('load');
         setForm();
-        setTimeout(() => { getInFoCus(); }, 500);
+        setTimeout(() => { getInFoCus(); set_select2(); }, 500);
         setTimeout(() => { $('.main-form').removeClass('load'); }, 1000);
 
     } else if (targetElement.classList.contains("book-now")) {
@@ -35,8 +29,56 @@ document.addEventListener("click", function (event) {
         viewDetailInfor();
     } else if (targetElement.classList.contains("note-seemore")) {
         viewDetailNote();
+    } else if (targetElement.classList.contains("btn-tag-item")) {
+        sendTags();
+    } else if (targetElement.classList.contains("select2-selection__rendered")) {
+        console.log( $('#store_id').select2('val'));
     }
 });
+
+function set_select2(){
+    var a = $('#store_id');
+    if(a.length <= 0){
+        setTimeout(() => {
+            set_select2();
+        }, 1000);
+    } else {
+        $('.js-example-basic-multiple').select2();
+    }
+}
+
+function sendTags(){
+    setTimeout(() => {
+        var tag_array = [];
+        var btn_tag = $('.btn-tag-item');
+        btn_tag.each(function( index ) {
+            var alpha = $(this).css("background-color").replace(/^.*,(.+)\)/,'$1');
+            if(alpha >= 1 || alpha <= 0){
+                tag_array.push($(this).text())
+            }
+        });
+        let data = {
+            type: 'sendTags',
+            conversation: $('#conversation-code').val(),
+            cus_name: $('#customer-name').val(),
+            tags: tag_array,
+        }
+        chrome.storage.sync.get(['user_id', 'phone'], function (result) {
+            let rq = { ...data, ...result }
+            chrome.runtime.sendMessage(rq, function (response) {
+                chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
+                    if (res && res.status && res.type == 'sendTags') {
+                        if(res.status == 400){
+                            setNotify('error', res.message);
+                        } else{
+                            setNotify('success', res.message);
+                        }
+                    }
+                })
+            })
+        })
+    }, 500);
+}
 function viewDetailNote (){
     if($('.note-onindex').hasClass('active')){
         $('.note-onindex').removeClass('active');
@@ -207,26 +249,20 @@ function getInFoCus() {
     var search = url.indexOf('=');
     var main_param = url.slice(search + 1);
     var id_pos = main_param.indexOf('_');
-
-    
     let data = {
         type: 'getdetail',
         cus_code: main_param.slice(id_pos + 1),
         page_id: main_param.slice(0,id_pos),
     }
-
     chrome.runtime.sendMessage(data, function (response) {
-        //on data when get api get customer detail
         chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
             $('.main-form.main-two').removeClass('load');
-
             if (res && res.type == 'getdetail') {
                 if (res.status == 1 && res.data) {
                     let data = res.data;
                     if (data.customer_sent_code == main_param.slice(id_pos + 1)) {
                         $('input#cus_phone').val(data.customer_phone);
                         $('input#cus_id').val(data.id);
-
                         if (data.description != null) {
                             $('.cn span.value').html(data.description);
                         }
@@ -238,7 +274,9 @@ function getInFoCus() {
                             $('.report span.value').html(data.total_com + ' lần');
                         }
                         if (data.service != null) {
-                            $('#store_id').val(data.service);
+                            $('#store_id').select2('val', data.service);
+                        } else{
+                            $('#store_id').val(0);
                         }
                         if (data.note != null) {
                             $('#cus_note').val(data.note);
@@ -256,6 +294,7 @@ function getInFoCus() {
                     $('input#cus_phone').val('');
                     $('select#store_id').val(1);
                     $('.main-form.main-two').addClass('new');
+                    $('#store_id').val(0);
                 }
             }
 
@@ -265,52 +304,73 @@ function getInFoCus() {
 
 function submitPhone() {
     $('button.submit-send').html('•••');
-    let phone = $('#cus_phone').val();
-    var phonereg = /^[0-9]+$/;
     let service_id = $('#store_id').val();
-    if (phone.match(phonereg)) {
-        if (service_id && service_id > 0) {
-            let data = {
-                type: 'submitPhone',
-                conversation: $('#conversation-code').val(),
-                customer_phone: $('#cus_phone').val(),
-                customer: $('#customer-code').val(),
-                cus_name: $('#customer-name').val(),
-                note: $('#cus_note').val(),
-                service: service_id,
-            }
-            $('button.submit-send').html('Gửi');
-            chrome.storage.sync.get(['user_id', 'phone'], function (result) {
-                let rq = { ...data, ...result }
-
-                console.log('rq in content', rq);
-                
-                chrome.runtime.sendMessage(rq, function (response) {
-                    chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
-                        if (res && res.status && res.type == 'submitPhone') {
-                            if(res.status == 400){
-                                setNotify('error', res.message);
-                            } else{
-                                setNotify('success', res.message);
-                                getInFoCus();
-                            }
-                        }
-                    })
-
-                })
-            })
-        } else {
-            setNotify('error', 'Chọn dịch vụ tư vấn!');
-            $('button.submit-send').html('Gửi');
+    if (service_id && service_id.length > 0) {
+        let data = {
+            type: 'submitPhone',
+            conversation: $('#conversation-code').val(),
+            customer_phone: $('#cus_phone').val(),
+            customer: $('#customer-code').val(),
+            cus_name: $('#customer-name').val(),
+            note: $('#cus_note').val(),
+            service: service_id,
         }
+        $('button.submit-send').html('Cập nhật');
+        chrome.storage.sync.get(['user_id', 'phone'], function (result) {
+            let rq = { ...data, ...result }
+            chrome.runtime.sendMessage(rq, function (response) {
+                chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
+                    if (res && res.status && res.type == 'submitPhone') {
+                        if(res.status == 400){
+                            setNotify('error', res.message);
+                        } else{
+                            setNotify('success', res.message);
+                            getInFoCus();
+                        }
+                    }
+                })
 
+            })
+        })
     } else {
-        setNotify('error', 'Số điện thoại không hợp lệ!');
+        setNotify('error', 'Chọn dịch vụ tư vấn!');
         $('button.submit-send').html('Gửi');
     }
-
 }
-
+function submitOnSelect2(){
+    setTimeout(() => {
+        $('#store_id').on('select2:select', function (e) {
+            let service_id = $('#store_id').val();
+            if (service_id && service_id.length > 0) {
+                let data = {
+                    type: 'submitPhone',
+                    conversation: $('#conversation-code').val(),
+                    customer: $('#customer-code').val(),
+                    service: service_id,
+                }
+                $('button.submit-send').html('Cập nhật');
+                chrome.storage.sync.get(['user_id', 'phone'], function (result) {
+                    let rq = { ...data, ...result }
+                    chrome.runtime.sendMessage(rq, function (response) {
+                        chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
+                            if (res && res.status && res.type == 'submitPhone') {
+                                if(res.status == 400){
+                                    setNotify('error', res.message);
+                                } else{
+                                    setNotify('success', res.message);
+                                    getInFoCus();
+                                }
+                            }
+                        })
+        
+                    })
+                })
+            } else {
+                setNotify('error', 'Chọn dịch vụ tư vấn!');
+            }
+          });
+    }, 1000);
+}
 function setForm() {
     chrome.storage.sync.get(['phone', 'user_name'], function (data) {
         if (data.phone) {
@@ -321,7 +381,7 @@ function setForm() {
                 if (!user_box.hasClass('active')) {
                     user_box.addClass('active');
                     chrome.storage.sync.get(['groupService'], function (result) {
-                        var text_option = '<option value="0" selected>-- không --</option>';
+                        var text_option = '';
                         result.groupService.data.forEach(element => {
                             text_option = text_option + '<option value="' + element.id + '">' + element.name + '</option>'
                         });
@@ -340,13 +400,13 @@ function setForm() {
                                 <div class="form-group"> <label for="">Số điện thoại</label> <input type="text" id="cus_phone"> </div>
                                 <div class="form-group">
                                     <label for="">Dịch vụ cần tư vấn</label>
-                                    <select name="" id="store_id">' + ${text_option} +'</select> </div>
+                                    <select id="store_id" class="js-example-basic-multiple" name="states[]" multiple="multiple">${text_option}</select> </div>
                                 <div class="form-group" style="position: relative;">
                                      <label for="" style="position: relative;">Ghi chú
                                     </label>
                                       <textarea id="cus_note" rows="3" > </textarea>
                                 </div>
-                                <div class="form-group" style="margin-bottom: 0"> <button class="submit-send">Gửi</button> </div>
+                                <div class="form-group" style="margin-bottom: 0"> <button class="submit-send">Cập nhật</button> </div>
                             </div>
                             <div class="main-form main-two" style="margin-top: 15px; padding: 10px;">
                                 <div class="customer-status" style="margin:0">Khách mới</div>    
@@ -362,17 +422,21 @@ function setForm() {
                         </div>`)
                     })
                 }
-                setTimeout(() => {
-                    const cus_name = document.getElementById("pageCustomer").getAttribute('data-clipboard-text');
-                    const forkUrl = document.getElementById("linkConversation").getAttribute('data-clipboard-text');
-                    var url = forkUrl;
-                    var search = url.indexOf('=');
-                    var main_param = url.slice(search + 1);
-                    var id_pos = main_param.indexOf('_');
-                    $('#customer-name').val(cus_name);
-                    $('#customer-code').val(main_param.slice(id_pos + 1));
-                    $('#conversation-code').val(main_param);
-                }, 500);
+                for (let index = 0; index < 2; index++) {
+                    setTimeout(() => {
+                        const cus_name = document.getElementById("pageCustomer").getAttribute('data-clipboard-text');
+                        const forkUrl = document.getElementById("linkConversation").getAttribute('data-clipboard-text');
+                        var url = forkUrl;
+                        var search = url.indexOf('=');
+                        var main_param = url.slice(search + 1);
+                        var id_pos = main_param.indexOf('_');
+                        $('#customer-name').val(cus_name);
+                        $('#customer-code').val(main_param.slice(id_pos + 1));
+                        $('#conversation-code').val(main_param);
+                        $('#store_id').val(0);
+                    }, 1000);
+                }
+                submitOnSelect2();
             } else {
                 $('#customerCol').html(`
                 <div class="my-test">
@@ -408,6 +472,40 @@ function setForm() {
 document.addEventListener('copy', (event) => {
     if (isNaN(event.target.value) == false) {
         $('#cus_phone').val(event.target.value);
+        const forkUrl = document.getElementById("linkConversation").getAttribute('data-clipboard-text');
+        var url = forkUrl;
+        var search = url.indexOf('=');
+        var main_param = url.slice(search + 1);
+        var id_pos = main_param.indexOf('_');
+        let phone = event.target.value;
+        if (phone) {
+            let data = {
+                type: 'submitPhone',
+                conversation: $('#conversation-code').val(),
+                customer_phone: phone,
+                customer: main_param.slice(id_pos + 1),
+                only_phone: 1
+            }
+            chrome.storage.sync.get(['user_id', 'phone'], function (result) {
+                let rq = { ...data, ...result }
+                chrome.runtime.sendMessage(rq, function (response) {
+                    chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
+                        if (res && res.status && res.type == 'submitPhone') {
+                            if(res.status == 400){
+                                setNotify('error', res.message);
+                            } else{
+                                setNotify('success', res.message);
+                                getInFoCus();
+                            }
+                        }
+                    })
+
+                })
+            })
+    
+        } else {
+            setNotify('error', 'Số điện thoại không hợp lệ!');
+        }
     }
 });
 
@@ -537,7 +635,11 @@ function setIcon() {
         $('.staff-name').html(result.user_name);
     })
     setTimeout(() => {
-        var temp = $('.media.conversation-list-item');
+        setIcon();
+    }, 3000);
+}
+function setClicked(){
+    var temp = $('.media.conversation-list-item');
         temp.each(function (index) {
             if (!$(this).hasClass('active')) {
                 $(this).addClass('active');
@@ -546,17 +648,21 @@ function setIcon() {
                 $(this).find("img").addClass('be-clicked');
             }
         });
-    }, 500);
-
     setTimeout(() => {
-        setIcon();
-    }, 3000);
+        setClicked();
+    }, 1000);
+}
+
+function getConversationCode(){
+        const forkUrl = document.getElementById("linkConversation").getAttribute('data-clipboard-text');
+        var url = forkUrl;
+        var search = url.indexOf('=');
+        var main_param = url.slice(search + 1);
+    return main_param;
 }
 
 
-
 function setStyleBox() {
-
     $('head').append(`<style>
                 #customerCol{position:relative;}
                 .on-index, .note-onindex{

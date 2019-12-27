@@ -13,6 +13,8 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
 
   if (request.type == 'getdetail') getCusDetailSV(request);
 
+  if(request.type == 'sendTags') sendtags_bg(request);
+
   if (request.type == 'sendAndClear') sendAndClearData_bg();
   
   if (request.type == 'getNoteDetail') getNoteDetail(request);
@@ -26,14 +28,11 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
   if (request.type == 'login') login(request.phone, request.password);
 
   if (request.type == 'key') {
-
-
     
     let today = new Date();
     let date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
     let time = today.getHours() + ":" + today.getMinutes() + ":" + today.getSeconds();
     let dateTime = date + ' ' + time;
-
 
     let data = {
       "api_key": "1DB185DCFB40836B29BFC1A500E3EB",
@@ -134,26 +133,53 @@ function getGroupService_bg(phone) {
     })
   }
 }
-
+function sendtags_bg(request){
+  var arrSend = {
+    "api_key": "1DB185DCFB40836B29BFC1A500E3EB",
+    "conversation_code": request.conversation,
+    "up_tag": 1,
+    "tags": request.tags,
+  }
+  console.log();
+  
+  base_url = request.phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
+  fetch(base_url + '/api/index.php/pancake/GetCustomerInfor', {
+    method: 'post',
+    body: JSON.stringify(arrSend)
+  }).then(r => {
+    r.json().then(function (data) {
+      data.type = 'sendTags';
+      sendMessageToContent(data);
+    })
+  })
+}
 function submitPhoneSV(request) {
   let today = new Date();
   let date = today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate();
-  let arrSend = {
-    "api_key": "1DB185DCFB40836B29BFC1A500E3EB",
-    "user_id": request.user_id,
-    "cus_code": request.customer,
-    "cus_phone": request.customer_phone,
-    "conversation_code": request.conversation,
-    "group_service_id": request.service,
-    "cus_name": request.cus_name,
-    "created_date": today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate(),
-    "created_date": date,
-    "note": request.note,
+  if(request.only_phone == 1){
+    var arrSend = {
+      "api_key": "1DB185DCFB40836B29BFC1A500E3EB",
+      "user_id": request.user_id,
+      "cus_code": request.customer,
+      "cus_phone": request.customer_phone,
+      "conversation_code": request.conversation,
+      "only_phone": request.only_phone,
+    }
+  } else{
+    var arrSend = {
+      "api_key": "1DB185DCFB40836B29BFC1A500E3EB",
+      "user_id": request.user_id,
+      "cus_code": request.customer,
+      "cus_phone": request.customer_phone,
+      "conversation_code": request.conversation,
+      "group_service_id": request.service,
+      "cus_name": request.cus_name,
+      "created_date": today.getFullYear() + '-' + (today.getMonth() + 1) + '-' + today.getDate(),
+      "created_date": date,
+      "note": request.note,
+    }
   }
-  console.log('rq in bg', JSON.stringify(arrSend));
-  
   base_url = request.phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
-
   fetch(base_url + '/api/index.php/pancake/api_update_pancake_conversation', {
     method: 'post',
     body: JSON.stringify(arrSend)
