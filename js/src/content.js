@@ -1,19 +1,77 @@
 console.log('Connect to SeoulSpa extention!');
 var message = '';
+var currService = [];
+var services = [];
 setIcon();
 setClicked();
 setStyleBox();
 set_select2();
 
+
+
+document.addEventListener("change", function (event) {
+    var targetElement = event.target || event.srcElement;
+    if (targetElement.classList.contains("select-option-service")) {
+
+        let ser = services.find(e => {
+            return e.id == $('#store_id').val();
+        })
+        if (ser) {
+            currService.push({ id: ser.id, name: ser.name });
+        }
+        let serviceHtml = '';
+        currService.forEach(e => {
+            serviceHtml = serviceHtml + `<span class="label label-success" style="margin: 4px" >
+                            ${e.name}
+                            <span style="cursor: pointer;" class="store_ls ${e.id}" 
+                            >&nbsp;&nbsp;x</span>
+                            </span>`
+        })
+        $('.formselect').html(serviceHtml);
+        let lsSer = [];
+        currService.forEach(e => {
+            lsSer.push(e.id);
+        })
+
+        let data = {
+            type: 'submitPhone',
+            conversation: $('#conversation-code').val(),
+            customer_phone: $('#cus_phone').val(),
+            customer: $('#customer-code').val(),
+            cus_name: $('#customer-name').val(),
+            note: $('#cus_note').val(),
+            service: lsSer,
+        }
+        $('button.submit-send').html('Cập nhật');
+        chrome.storage.sync.get(['user_id', 'phone'], function (result) {
+            let rq = { ...data, ...result }
+            chrome.runtime.sendMessage(rq, function (response) {
+                chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
+                    if (res && res.status && res.type == 'submitPhone') {
+                        if (res.status == 400) {
+                            setNotify('error', res.message);
+                        } else {
+                            setNotify('success', res.message);
+                            getInFoCus();
+                        }
+                    }
+                })
+
+            })
+        })
+    }
+})
+
 document.addEventListener("click", function (event) {
     var targetElement = event.target || event.srcElement;
     if (targetElement.classList.contains("submit-send")) {
         submitPhone();
-    } 
+    }
     else if (targetElement.classList.contains("be-clicked")) {
         $('.main-form.main-two').addClass('load');
         $('.main-form').addClass('load');
         setForm();
+        currService = [];
         setTimeout(() => { getInFoCus(); set_select2(); }, 500);
         setTimeout(() => { $('.main-form').removeClass('load'); }, 1000);
 
@@ -25,20 +83,21 @@ document.addEventListener("click", function (event) {
         logOut();
     } else if (targetElement.classList.contains("login-submit")) {
         login();
-    }  else if (targetElement.classList.contains("see-more")) {
+    } else if (targetElement.classList.contains("see-more")) {
         viewDetailInfor();
     } else if (targetElement.classList.contains("note-seemore")) {
         viewDetailNote();
     } else if (targetElement.classList.contains("btn-tag-item")) {
         sendTags();
-    } else if (targetElement.classList.contains("select2-selection__rendered")) {
-        console.log( $('#store_id').select2('val'));
+    } else if (targetElement.classList.contains("store_ls")) {
+        // console.log($('#store_id').select2('val'));
+        console.log(targetElement.classList);
     }
 });
 
-function set_select2(){
+function set_select2() {
     var a = $('#store_id');
-    if(a.length <= 0){
+    if (a.length <= 0) {
         setTimeout(() => {
             set_select2();
         }, 1000);
@@ -47,13 +106,13 @@ function set_select2(){
     }
 }
 
-function sendTags(){
+function sendTags() {
     setTimeout(() => {
         var tag_array = [];
         var btn_tag = $('.btn-tag-item');
-        btn_tag.each(function( index ) {
-            var alpha = $(this).css("background-color").replace(/^.*,(.+)\)/,'$1');
-            if(alpha >= 1 || alpha <= 0){
+        btn_tag.each(function (index) {
+            var alpha = $(this).css("background-color").replace(/^.*,(.+)\)/, '$1');
+            if (alpha >= 1 || alpha <= 0) {
                 tag_array.push($(this).text())
             }
         });
@@ -68,9 +127,9 @@ function sendTags(){
             chrome.runtime.sendMessage(rq, function (response) {
                 chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
                     if (res && res.status && res.type == 'sendTags') {
-                        if(res.status == 400){
+                        if (res.status == 400) {
                             setNotify('error', res.message);
-                        } else{
+                        } else {
                             setNotify('success', res.message);
                         }
                     }
@@ -79,8 +138,8 @@ function sendTags(){
         })
     }, 500);
 }
-function viewDetailNote (){
-    if($('.note-onindex').hasClass('active')){
+function viewDetailNote() {
+    if ($('.note-onindex').hasClass('active')) {
         $('.note-onindex').removeClass('active');
         $('.note-seemore').html('Xem thêm ghi chú');
     } else {
@@ -96,16 +155,16 @@ function viewDetailNote (){
         type: 'getNoteDetail',
         cus_code: main_param.slice(id_pos + 1),
     }
-    chrome.runtime.sendMessage(data, function (response) { 
+    chrome.runtime.sendMessage(data, function (response) {
         chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
             if (res && res.status && res.type == 'getNoteDetail') {
-                
+
             }
         })
     })
 }
-function viewDetailInfor(){
-    if($('.on-index').hasClass('active')){
+function viewDetailInfor() {
+    if ($('.on-index').hasClass('active')) {
         $('.on-index').removeClass('active');
         $('.see-more').html('Xem');
     } else {
@@ -190,6 +249,7 @@ function login() {
                 }
                 if (res && res.type == 'groupService') {
                     setForm();
+                    currService = [];
                     getInFoCus();
                     setTimeout(() => {
                         chrome.storage.sync.get(['user_name'], function (result) {
@@ -252,14 +312,17 @@ function getInFoCus() {
     let data = {
         type: 'getdetail',
         cus_code: main_param.slice(id_pos + 1),
-        page_id: main_param.slice(0,id_pos),
+        page_id: main_param.slice(0, id_pos),
     }
     chrome.runtime.sendMessage(data, function (response) {
         chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
             $('.main-form.main-two').removeClass('load');
+            console.log('service', res );
+
             if (res && res.type == 'getdetail') {
                 if (res.status == 1 && res.data) {
                     let data = res.data;
+
                     if (data.customer_sent_code == main_param.slice(id_pos + 1)) {
                         $('input#cus_phone').val(data.customer_phone);
                         $('input#cus_id').val(data.id);
@@ -273,9 +336,12 @@ function getInFoCus() {
                         if (data.total_com != null) {
                             $('.report span.value').html(data.total_com + ' lần');
                         }
-                        if (data.service != null) {
+                        if (data.service) {
                             $('#store_id').select2('val', data.service);
-                        } else{
+                            console.log('service', data.service);
+                            currService = data.service;
+
+                        } else {
                             $('#store_id').val(0);
                         }
                         if (data.note != null) {
@@ -283,7 +349,7 @@ function getInFoCus() {
                         }
                         if (data.is_old == 0) {
                             $('.customer-status').html('Khách mới');
-                        }else{
+                        } else {
                             $('.customer-status').html('Khách cũ');
                             $('.customer-status').append('<div class="see-more">Xem</div>')
                         }
@@ -321,9 +387,9 @@ function submitPhone() {
             chrome.runtime.sendMessage(rq, function (response) {
                 chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
                     if (res && res.status && res.type == 'submitPhone') {
-                        if(res.status == 400){
+                        if (res.status == 400) {
                             setNotify('error', res.message);
-                        } else{
+                        } else {
                             setNotify('success', res.message);
                             getInFoCus();
                         }
@@ -337,7 +403,7 @@ function submitPhone() {
         $('button.submit-send').html('Gửi');
     }
 }
-function submitOnSelect2(){
+function submitOnSelect2() {
     setTimeout(() => {
         $('#store_id').on('select2:select', function (e) {
             let service_id = $('#store_id').val();
@@ -354,21 +420,21 @@ function submitOnSelect2(){
                     chrome.runtime.sendMessage(rq, function (response) {
                         chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
                             if (res && res.status && res.type == 'submitPhone') {
-                                if(res.status == 400){
+                                if (res.status == 400) {
                                     setNotify('error', res.message);
-                                } else{
+                                } else {
                                     setNotify('success', res.message);
                                     getInFoCus();
                                 }
                             }
                         })
-        
+
                     })
                 })
             } else {
                 setNotify('error', 'Chọn dịch vụ tư vấn!');
             }
-          });
+        });
     }, 1000);
 }
 function setForm() {
@@ -382,9 +448,19 @@ function setForm() {
                     user_box.addClass('active');
                     chrome.storage.sync.get(['groupService'], function (result) {
                         var text_option = '';
+                        services = result.groupService.data;
                         result.groupService.data.forEach(element => {
                             text_option = text_option + '<option value="' + element.id + '">' + element.name + '</option>'
                         });
+                        let serviceHtml = '';
+                        currService.forEach(e => {
+                            serviceHtml = serviceHtml + `<span class="label label-success style="padding:2px" ">
+                            ${e.name}
+                            <span style="cursor: pointer;" class="store_ls ${e.id}" 
+                            >&nbsp;&nbsp;x</span>
+                            </span>`
+                        })
+
                         $('#customerCol').html(`
                         <div class="my-test">
                             <div class="staff-name"></div>
@@ -400,7 +476,11 @@ function setForm() {
                                 <div class="form-group"> <label for="">Số điện thoại</label> <input type="text" id="cus_phone"> </div>
                                 <div class="form-group">
                                     <label for="">Dịch vụ cần tư vấn</label>
-                                    <select id="store_id" class="js-example-basic-multiple" name="states[]" multiple="multiple">${text_option}</select> </div>
+                                    <select class="select-option-service" id="store_id" >${text_option}</select> 
+                                    <div style="width: 250px;word-wrap:break-word" class="formselect">
+                                        ${serviceHtml}
+                                    </div>
+                                </div>
                                 <div class="form-group" style="position: relative;">
                                      <label for="" style="position: relative;">Ghi chú
                                     </label>
@@ -491,9 +571,9 @@ document.addEventListener('copy', (event) => {
                 chrome.runtime.sendMessage(rq, function (response) {
                     chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
                         if (res && res.status && res.type == 'submitPhone') {
-                            if(res.status == 400){
+                            if (res.status == 400) {
                                 setNotify('error', res.message);
-                            } else{
+                            } else {
                                 setNotify('success', res.message);
                                 getInFoCus();
                             }
@@ -502,7 +582,7 @@ document.addEventListener('copy', (event) => {
 
                 })
             })
-    
+
         } else {
             setNotify('error', 'Số điện thoại không hợp lệ!');
         }
@@ -638,26 +718,26 @@ function setIcon() {
         setIcon();
     }, 3000);
 }
-function setClicked(){
+function setClicked() {
     var temp = $('.media.conversation-list-item');
-        temp.each(function (index) {
-            if (!$(this).hasClass('active')) {
-                $(this).addClass('active');
-                $(this).find("div").addClass('be-clicked');
-                $(this).find("span").addClass('be-clicked');
-                $(this).find("img").addClass('be-clicked');
-            }
-        });
+    temp.each(function (index) {
+        if (!$(this).hasClass('active')) {
+            $(this).addClass('active');
+            $(this).find("div").addClass('be-clicked');
+            $(this).find("span").addClass('be-clicked');
+            $(this).find("img").addClass('be-clicked');
+        }
+    });
     setTimeout(() => {
         setClicked();
     }, 1000);
 }
 
-function getConversationCode(){
-        const forkUrl = document.getElementById("linkConversation").getAttribute('data-clipboard-text');
-        var url = forkUrl;
-        var search = url.indexOf('=');
-        var main_param = url.slice(search + 1);
+function getConversationCode() {
+    const forkUrl = document.getElementById("linkConversation").getAttribute('data-clipboard-text');
+    var url = forkUrl;
+    var search = url.indexOf('=');
+    var main_param = url.slice(search + 1);
     return main_param;
 }
 

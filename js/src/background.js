@@ -105,6 +105,8 @@ function getNoteDetail(request){
 
 function sendMessageToContent(data) {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
+    console.log('tabs',tabs);
+    
     chrome.tabs.sendMessage(tabs[0].id, data, function (response) { });
   });
 }
@@ -140,8 +142,6 @@ function sendtags_bg(request){
     "up_tag": 1,
     "tags": request.tags,
   }
-  console.log();
-  
   base_url = request.phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
   fetch(base_url + '/api/index.php/pancake/GetCustomerInfor', {
     method: 'post',
@@ -200,12 +200,16 @@ function getCusDetailSV(request) {
   chrome.storage.sync.get(['phone'], function (result) {
 
     base_url = result.phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
-
+    console.log(arrSend);
+    
     fetch(base_url + '/api/index.php/pancake/GetCustomerInfor', {
       method: 'post',
       body: JSON.stringify(arrSend)
     }).then(r => {
+      console.log(r);
+      
       r.json().then(function (data) {
+        console.log(data);
         data.type = "getdetail";
         sendMessageToContent(data);
       })
