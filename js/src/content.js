@@ -12,53 +12,13 @@ set_select2();
 document.addEventListener("change", function (event) {
     var targetElement = event.target || event.srcElement;
     if (targetElement.classList.contains("select-option-service")) {
-
-        let ser = services.find(e => {
-            return e.id == $('#store_id').val();
-        })
-        if (ser) {
+        let ser = services.find(e => { return e.id == $('#store_id').val(); })
+        let isExitSer = currService.find(e => { return e.id == $('#store_id').val(); })
+        if (ser && !isExitSer) {
             currService.push({ id: ser.id, name: ser.name });
+            setShowListService();
+            saveWhenChangeService();
         }
-        let serviceHtml = '';
-        currService.forEach(e => {
-            serviceHtml = serviceHtml + `<span class="label label-success" style="margin: 4px" >
-                            ${e.name}
-                            <span style="cursor: pointer;" class="store_ls ${e.id}" 
-                            >&nbsp;&nbsp;x</span>
-                            </span>`
-        })
-        $('.formselect').html(serviceHtml);
-        let lsSer = [];
-        currService.forEach(e => {
-            lsSer.push(e.id);
-        })
-
-        let data = {
-            type: 'submitPhone',
-            conversation: $('#conversation-code').val(),
-            customer_phone: $('#cus_phone').val(),
-            customer: $('#customer-code').val(),
-            cus_name: $('#customer-name').val(),
-            note: $('#cus_note').val(),
-            service: lsSer,
-        }
-        $('button.submit-send').html('Cập nhật');
-        chrome.storage.sync.get(['user_id', 'phone'], function (result) {
-            let rq = { ...data, ...result }
-            chrome.runtime.sendMessage(rq, function (response) {
-                chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
-                    if (res && res.status && res.type == 'submitPhone') {
-                        if (res.status == 400) {
-                            setNotify('error', res.message);
-                        } else {
-                            setNotify('success', res.message);
-                            getInFoCus();
-                        }
-                    }
-                })
-
-            })
-        })
     }
 })
 
@@ -90,10 +50,60 @@ document.addEventListener("click", function (event) {
     } else if (targetElement.classList.contains("btn-tag-item")) {
         sendTags();
     } else if (targetElement.classList.contains("store_ls")) {
-        // console.log($('#store_id').select2('val'));
-        console.log(targetElement.classList);
+        deleteService(targetElement.classList[1]);
     }
 });
+
+function saveWhenChangeService() {
+    let lsSer = [];
+    currService.forEach(e => {
+        lsSer.push(e.id);
+    })
+    let data = {
+        type: 'submitPhone',
+        conversation: $('#conversation-code').val(),
+        customer: $('#customer-code').val(),
+        cus_name: $('#customer-name').val(),
+        service: lsSer,
+    }
+    $('button.submit-send').html('Cập nhật');
+    chrome.storage.sync.get(['user_id', 'phone'], function (result) {
+        let rq = { ...data, ...result }
+        chrome.runtime.sendMessage(rq, function (response) {
+            chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
+                if (res && res.status && res.type == 'submitPhone') {
+                    if (res.status == 400) {
+                        setNotify('error', res.message);
+                    } else {
+                        setNotify('success', res.message);
+                        getInFoCus();
+                    }
+                }
+            })
+
+        })
+    })
+}
+function deleteService(id) {
+    let index = currService.findIndex(r => {
+        return r.id == id;
+    })
+    currService.splice(index, 1);
+    setShowListService();
+    saveWhenChangeService();
+}
+
+function setShowListService() {
+    let serviceHtml = '';
+    currService.forEach(e => {
+        serviceHtml = serviceHtml + `<span class="label label-success" style="margin: 4px" >
+                            ${e.name}
+                            <span style="cursor: pointer;" class="store_ls ${e.id} text-danger"  title="Xóa"
+                            >&nbsp;&nbsp;x</span>
+                            </span>`
+    })
+    $('.formselect').html(serviceHtml);
+}
 
 function set_select2() {
     var a = $('#store_id');
@@ -317,8 +327,6 @@ function getInFoCus() {
     chrome.runtime.sendMessage(data, function (response) {
         chrome.extension.onMessage.addListener(function (res, sender, sendResponse) {
             $('.main-form.main-two').removeClass('load');
-            console.log('service', res );
-
             if (res && res.type == 'getdetail') {
                 if (res.status == 1 && res.data) {
                     let data = res.data;
@@ -337,10 +345,8 @@ function getInFoCus() {
                             $('.report span.value').html(data.total_com + ' lần');
                         }
                         if (data.service) {
-                            $('#store_id').select2('val', data.service);
-                            console.log('service', data.service);
                             currService = data.service;
-
+                            setShowListService();
                         } else {
                             $('#store_id').val(0);
                         }
@@ -371,7 +377,7 @@ function getInFoCus() {
 function submitPhone() {
     $('button.submit-send').html('•••');
     let service_id = $('#store_id').val();
-    if (service_id && service_id.length > 0) {
+    if (currService && currService.length > 0) {
         let data = {
             type: 'submitPhone',
             conversation: $('#conversation-code').val(),
@@ -452,14 +458,7 @@ function setForm() {
                         result.groupService.data.forEach(element => {
                             text_option = text_option + '<option value="' + element.id + '">' + element.name + '</option>'
                         });
-                        let serviceHtml = '';
-                        currService.forEach(e => {
-                            serviceHtml = serviceHtml + `<span class="label label-success style="padding:2px" ">
-                            ${e.name}
-                            <span style="cursor: pointer;" class="store_ls ${e.id}" 
-                            >&nbsp;&nbsp;x</span>
-                            </span>`
-                        })
+                        setShowListService();
 
                         $('#customerCol').html(`
                         <div class="my-test">
@@ -476,9 +475,10 @@ function setForm() {
                                 <div class="form-group"> <label for="">Số điện thoại</label> <input type="text" id="cus_phone"> </div>
                                 <div class="form-group">
                                     <label for="">Dịch vụ cần tư vấn</label>
-                                    <select class="select-option-service" id="store_id" >${text_option}</select> 
-                                    <div style="width: 250px;word-wrap:break-word" class="formselect">
-                                        ${serviceHtml}
+                                        <div class="d-flex">
+                                            <select class="select-option-service" title="Chọn" id="store_id" >${text_option}</select> 
+                                            <div style="word-wrap:break-word" class="formselect">
+                                        </div>
                                     </div>
                                 </div>
                                 <div class="form-group" style="position: relative;">
@@ -764,6 +764,7 @@ function setStyleBox() {
                     visibility: unset;
                 }
                 .my-test{
+                    overflow-y: auto;
                     padding: 10px 15px;
                     position: absolute; 
                     width: 100%; 
@@ -894,6 +895,38 @@ function setStyleBox() {
                     position: relative;
                     line-height: 22px;
                     font-weight: bold;
+                }
+                .d-flex {
+                    display: flex;
+                    align-items: center;
+                    flex-wrap: wrap;
+                    width: 100%;
+                    justify-content: space-between;
+                }
+                select#store_id{
+                    width: 30px;
+                }
+                .formselect {
+                    width: 80%;
+                    display: flex;
+                    flex-wrap: wrap;
+                    aligh-item: center;
+                }
+                .formselect .label-success {
+                    line-height: 15px;
+                    background-color: rgb(135, 49, 78);
+                }
+                .formselect .text-danger {
+                    color: #cbf2ff;
+                }
+                select#store_id {
+                    -webkit-appearance: none;
+                    -moz-appearance: none;
+                    background-image: url(http://dev.seoulspa.vn/assets/images/hiring.svg);
+                    background-size: 22px;
+                    background-repeat: no-repeat;
+                    background-color: rgba(255, 250, 250, 0);
+                    cursor: pointer;
                 }
             </style>`);
 }

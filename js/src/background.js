@@ -47,12 +47,11 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
     if (request.phone && request.user_id) {
       //check user has inbox
 
+
       let index = request.inboxUserData.findIndex(e => {
         return e.inbox_id == request.conversation && e.user_id == request.user_id;
       });
       if (index >= 0) {
-
-        
         sendResponse({ status: 1, message: "Đã nhắn tin với user này!" });
         request.inboxUserData[index].time = dateTime;
         request.inboxUserData[index].created_date = date;
@@ -62,7 +61,6 @@ chrome.extension.onMessage.addListener(function (request, sender, sendResponse) 
         request.inboxUserData.push({ inbox_id: request.conversation, cus_code: request.customer ,user_id: request.user_id, time: dateTime, created_date: date });
         chrome.storage.sync.set({ inboxUserData: request.inboxUserData }, function () { });
         base_url = request.phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
-
         fetch(base_url + '/api/index.php/pancake/api_update_detail_converesation', {
           method: 'post',
           body: JSON.stringify([data])
@@ -105,8 +103,6 @@ function getNoteDetail(request){
 
 function sendMessageToContent(data) {
   chrome.tabs.query({ active: true, currentWindow: true }, function (tabs) {
-    console.log('tabs',tabs);
-    
     chrome.tabs.sendMessage(tabs[0].id, data, function (response) { });
   });
 }
@@ -200,16 +196,11 @@ function getCusDetailSV(request) {
   chrome.storage.sync.get(['phone'], function (result) {
 
     base_url = result.phone == '000' ? 'http://dev.seoulspa.vn' : 'http://app.seoulspa.vn';
-    console.log(arrSend);
-    
     fetch(base_url + '/api/index.php/pancake/GetCustomerInfor', {
       method: 'post',
       body: JSON.stringify(arrSend)
     }).then(r => {
-      console.log(r);
-      
       r.json().then(function (data) {
-        console.log(data);
         data.type = "getdetail";
         sendMessageToContent(data);
       })
