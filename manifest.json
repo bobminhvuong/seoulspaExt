@@ -1,99 +1,70 @@
 {
-  "name": "Pancake Sync Data Điểm Nhấn Group",
-  "version": "0.0.1",
-  "manifest_version": 2,
-  "description": "Gửi số điện thoại khách hàng. By DEV Điểm Nhấn Group",
-  "homepage_url": "http://extensionizr.com",
-  "icons": {
-    "16": "icons/def.png",
-    "48": "icons/def.png",
-    "128": "icons/def.png"
-  },
-  "default_locale": "en",
-  "background": {
-    "scripts": [
-      "js/src/background.js"
+    "name": "Pancake Sync Data Điểm Nhấn Group",
+    "version": "0.0.1",
+    "manifest_version": 2,
+    "description": "Gửi số điện thoại khách hàng. By DEV Điểm Nhấn Group",
+    "homepage_url": "http://extensionizr.com",
+    "icons": {
+        "16": "icons/def.png",
+        "48": "icons/def.png",
+        "128": "icons/def.png"
+    },
+    "default_locale": "en",
+    "background": {
+        "scripts": [
+            "js/src/background.js"
+        ],
+        "persistent": true
+    },
+    "options_page": "src/options/index.html",
+    "browser_action": {
+        "default_icon": "icons/def.png",
+        "default_title": "Gửi thông tin",
+        "default_popup": "src/browser_action/browser_action.html"
+    },
+    "commands": {
+        "toggle-feature-foo": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+Y",
+                "mac": "Command+Shift+Y"
+            },
+            "description": "Toggle feature foo"
+        },
+        "_execute_browser_action": {
+            "suggested_key": {
+                "windows": "Ctrl+Shift+Y",
+                "mac": "Command+Shift+Y",
+                "chromeos": "Ctrl+Shift+U",
+                "linux": "Ctrl+Shift+J"
+            }
+        },
+        "_execute_page_action": {
+            "suggested_key": {
+                "default": "Ctrl+Shift+E",
+                "windows": "Alt+Shift+P",
+                "mac": "Alt+Shift+P"
+            }
+        }
+    },
+    "chrome_url_overrides": {
+        "newtab": "src/override/override.html"
+    },
+    "permissions": [
+        "storage"
     ],
-    "persistent": true
-  },
-  "options_page": "src/options/index.html",
-  "browser_action": {
-    "default_icon": "icons/def.png",
-    "default_title": "Gửi thông tin",
-    "default_popup": "src/browser_action/browser_action.html"
-  },
-  "commands": {
-    "toggle-feature-foo": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+Y",
-        "mac": "Command+Shift+Y"
-      },
-      "description": "Toggle feature foo"
-    },
-    "_execute_browser_action": {
-      "suggested_key": {
-        "windows": "Ctrl+Shift+Y",
-        "mac": "Command+Shift+Y",
-        "chromeos": "Ctrl+Shift+U",
-        "linux": "Ctrl+Shift+J"
-      }
-    },
-    "_execute_page_action": {
-      "suggested_key": {
-        "default": "Ctrl+Shift+E",
-        "windows": "Alt+Shift+P",
-        "mac": "Alt+Shift+P"
-      }
-    }
-  },
-  "chrome_url_overrides": {
-    "newtab": "src/override/override.html"
-  },
-  "permissions": [
-    "chrome://favicon/",
-    "contentSettings",
-    "contextMenus",
-    "storage",
-    "cookies",
-    "activeTab",
-    "idle",
-    "management",
-    "notifications",
-    "tabs",
-    "https://pages.fm/*/*",
-    "background"
-  ],
-  "content_scripts": [
-    {
-      "matches": [
-        "https://www.google.com/*"
-      ],
-      "css": [
-        "src/inject/inject.css"
-      ]
-    },
-    {
-      "matches": [
-        "https://www.google.com/*"
-      ],
-      "js": [
-        "src/inject/inject.js"
-      ]
-    },
-    {
-      "matches": [
-        "https://pages.fm/*",
-        "http://pages.fm/*"
-      ],
-      "js": [
-        "js/jquery/jquery.min.js",
-        "js/src/content.js",
-        "js/select2/select2.min.js"
-      ],
-      "css": [
-        "js/select2/select2.min.css"
-      ]
-    }
-  ],
-  "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
+    "content_scripts": [{
+        "matches": [
+            "https://pages.fm/*",
+            "http://pages.fm/*"
+        ],
+        "js": [
+            "js/jquery/jquery.min.js",
+            "js/src/content.js",
+            "js/select2/select2.min.js"
+        ],
+        "css": [
+            "js/select2/select2.min.css"
+        ]
+    }],
+    "content_security_policy": "script-src 'self' 'unsafe-eval'; object-src 'self'"
 }
