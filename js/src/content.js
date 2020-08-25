@@ -339,10 +339,13 @@ function getInFoCus() {
         chrome.extension.onMessage.addListener(function(res, sender, sendResponse) {
             $('.main-form.main-two').removeClass('load');
             if (res && res.type == 'getdetail') {
+
+                console.log(res);
+
+                var textHistory = '';
                 if (res.status == 1 && res.data) {
                     let data = res.data;
                     var history = data.history;
-                    var textHistory = '';
                     if (history) {
                         history.forEach(function(value, index) {
                             var textStatus = '';
@@ -384,12 +387,12 @@ function getInFoCus() {
                             </div>`;
                         })
                     }
-                    if (data.customer_sent_code == main_param.slice(id_pos + 1)) {
+                    if (data && data.customer_sent_code == main_param.slice(id_pos + 1)) {
                         $('input#cus_phone').val(data.customer_phone);
                         $('input#cus_id').val(data.id_cus);
-                        if (textHistory != null) {
-                            $('.history-board').html(textHistory);
-                        }
+                        // if (textHistory != null) {
+                        //     $('.history-board').html(textHistory);
+                        // }
                         if (data.total_com != null) {
                             $('.report span.value').html(data.total_com + ' lần');
                         }
@@ -398,6 +401,7 @@ function getInFoCus() {
                             setShowListService();
                         } else {
                             $('#store_id').val(0);
+
                         }
                         if (data.note != null) {
                             $('#cus_note').val(data.note);
@@ -421,13 +425,18 @@ function getInFoCus() {
                         }
                     } else {
                         $('.customer-status').html('Khách mới');
+                        currService = [];
+                        setShowListService();
                     }
                 } else {
                     $('input#cus_phone').val('');
                     $('select#store_id').val(1);
                     $('.main-form.main-two').addClass('new');
                     $('#store_id').val(0);
+                    currService = [];
+                    setShowListService();
                 }
+                $('.history-board').html(textHistory);
             }
         });
     })
@@ -461,7 +470,8 @@ function formatDate(date) {
 function submitPhone() {
     $('button.submit-send').html('•••');
     let service_id = $('#store_id').val();
-    if (currService && currService.length > 0) {
+    // if (currService && currService.length > 0) {
+    if (1 > 0) {
         let data = {
             type: 'submitPhone',
             conversation: $('#conversation-code').val(),
@@ -539,6 +549,7 @@ function setForm() {
                 if (!user_box.hasClass('active')) {
                     user_box.addClass('active');
                     chrome.storage.sync.get(['groupService'], function(result) {
+
                         var text_option = '';
                         services = result.groupService.data;
                         result.groupService.data.forEach(element => {
@@ -643,13 +654,16 @@ document.addEventListener('copy', (event) => {
         var main_param = url.slice(search + 1);
         var id_pos = main_param.indexOf('_');
         let phone = event.target.value;
+        var cus_name = document.getElementById("pageCustomer").getAttribute('data-clipboard-text');
+
         if (phone) {
             let data = {
                 type: 'submitPhone',
                 conversation: $('#conversation-code').val(),
                 customer_phone: phone,
                 customer: main_param.slice(id_pos + 1),
-                only_phone: 1
+                only_phone: 1,
+                cus_name: cus_name,
             }
             chrome.storage.sync.get(['user_id', 'phone'], function(result) {
                 let rq = {...data, ...result }

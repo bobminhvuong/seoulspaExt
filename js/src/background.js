@@ -112,6 +112,10 @@ function getGroupService_bg(phone) {
             body: JSON.stringify(arrSend)
         }).then(r => {
             r.json().then(function(data) {
+
+
+                console.log(data);
+
                 if (data && data.status == 1) {
                     chrome.storage.sync.set({ 'groupService': data }, function() {});
                     data.type = 'groupService';
@@ -155,6 +159,7 @@ function submitPhoneSV(request) {
             "user_id": request.user_id,
             "cus_code": request.customer,
             "cus_phone": request.customer_phone,
+            "cus_name": request.cus_name,
             "conversation_code": request.conversation,
             "only_phone": request.only_phone,
         }

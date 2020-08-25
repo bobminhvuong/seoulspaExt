@@ -50,6 +50,7 @@
         "newtab": "src/override/override.html"
     },
     "permissions": [
+        "tabs",
         "storage"
     ],
     "content_scripts": [{
