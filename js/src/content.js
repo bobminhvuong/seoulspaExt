@@ -468,7 +468,7 @@ function formatDate(date) {
 }
 
 function submitPhone() {
-    $('button.submit-send').html('•••');
+    $('button.submit-send').css("pointer-events", 'none');
     let service_id = $('#store_id').val();
     // if (currService && currService.length > 0) {
     if (1 > 0) {
@@ -481,12 +481,12 @@ function submitPhone() {
             note: $('#cus_note').val(),
             service: service_id,
         }
-        $('button.submit-send').html('Cập nhật');
         chrome.storage.sync.get(['user_id', 'phone'], function(result) {
             let rq = {...data, ...result }
             chrome.runtime.sendMessage(rq, function(response) {
                 chrome.extension.onMessage.addListener(function(res, sender, sendResponse) {
                     if (res && res.status && res.type == 'submitPhone') {
+                        $('button.submit-send').css("pointer-events", 'inherit');
                         if (res.status == 400) {
                             setNotify('error', res.message);
                         } else {
@@ -656,6 +656,8 @@ document.addEventListener('copy', (event) => {
         let phone = event.target.value;
         var cus_name = document.getElementById("pageCustomer").getAttribute('data-clipboard-text');
 
+        $('copy').parent().css("pointer-events", "none");
+
         if (phone) {
             let data = {
                 type: 'submitPhone',
@@ -669,6 +671,7 @@ document.addEventListener('copy', (event) => {
                 let rq = {...data, ...result }
                 chrome.runtime.sendMessage(rq, function(response) {
                     chrome.extension.onMessage.addListener(function(res, sender, sendResponse) {
+                        $('copy').parent().css("pointer-events", "inherit");
                         if (res && res.status && res.type == 'submitPhone') {
                             if (res.status == 400) {
                                 setNotify('error', res.message);
